@@ -2,11 +2,11 @@
 
 ****
 
-#C++11新特性
+# C++11新特性
 
 ### 一、空指针与动态内存分配
 
-####nullptr
+#### nullptr
 
 ​	**空指针：0带来的二义性问题**
 
@@ -46,7 +46,7 @@
 
 ​		`delete []<指针名>;	// 删除数组空间`
 
-###二、List Initialization 列表初始化
+### 二、List Initialization 列表初始化
 
 #### 变量初始化
 
@@ -111,7 +111,7 @@ char s5[] = "Aloha";	// Omit curly braces (省略花括号)
 
 
 
-###三、C++类型转换
+### 三、C++类型转换
 + 语法：`static_cast<double>(1)/2`
 + 类型转换必须显式声明，不要依赖于隐式类型转换
 + 类型系统非常有价值
@@ -139,9 +139,9 @@ int main() {
 
 
 
-###四、C++11 自动类型推导：类型系统、auto与decltype
+### 四、C++11 自动类型推导：类型系统、auto与decltype
 
-####C++11 Enhancement for Type System (C++11对类型系统的增强)
+#### C++11 Enhancement for Type System (C++11对类型系统的增强)
 
 ​	**类型(type)**
 
@@ -339,7 +339,7 @@ int main() {
 }
 ```
 
-####Almost Always Auto(AAA)
+#### Almost Always Auto(AAA)
 
 ​	**Why Almost Always Auto（为何尽量使用auto）**
 
@@ -398,17 +398,17 @@ auto f = [](double) { /* ... */ };	// 匿名函数
 
 + decltype主要用于泛型编程（模板）
 
-###五、简化的C++内存模型
-#####1.Stack 栈
+### 五、简化的C++内存模型
+##### 1.Stack 栈
 
 + 编译器自动分配释放
 + 存放局部变量
 
-#####2.Heap 堆
+##### 2.Heap 堆
 
 + 一般由程序员分配释放`new`/`delete`。若程序员不释放，程序结束时可能由OS回收
 
-#####3.Global/Static 全局区/静态区
+##### 3.Global/Static 全局区/静态区
 
 + 全局变量和静态变量的存储是放在一块的
 
@@ -418,7 +418,7 @@ auto f = [](double) { /* ... */ };	// 匿名函数
   >
   > 程序结束释放
 
-#####4.Constant 常量区
+##### 4.Constant 常量区
 
 + 可以理解为所有常量都放在一起
 + 该区域内容不可修改
@@ -443,9 +443,9 @@ int myFunc1(int* pi) {	// 形参pi为局部变量，存放在栈区
 
 
 
-###六、常量与指针
+### 六、常量与指针
 
-#### Named Constants（命名常量/符号常量） 
+####  Named Constants（命名常量/符号常量） 
 
 ​	**`const datatype CONSTANTNAME = VALUE;	`	（const 与 datatype可以交换顺序）**
 
@@ -532,7 +532,7 @@ int main() {
 
 
 
-####Usage of using, typedef and \#define	
+#### Usage of using, typedef and \#define	
 
 ​	**Review:#define and typedef（回顾：C语言中的#define 和typedef**
 
@@ -579,7 +579,7 @@ int main() {
 
 ### 七、特殊函数：重载、默认参数值与内联
 
-####变量作用域
+#### 变量作用域
 
 1. 局部变量作用域:从定义位置到所在块尾
 
@@ -589,7 +589,7 @@ int main() {
 
 
 
-####内联函数 inline functions
+#### 内联函数 inline functions
 
 ​	**Pros and cons of functions（使用函数的优缺点）**
 
@@ -633,7 +633,7 @@ int y = (0 > 8 : 0 : 8);
 
 
 
-####内联函数的使用限制Restrictions for inline functions
+#### 内联函数的使用限制Restrictions for inline functions
 
 ​	**Desire for short functions（适用于频繁调用的短期函数）**
 
@@ -646,8 +646,8 @@ int y = (0 > 8 : 0 : 8);
 
 
 
-###八、C++11 基于范围的for循环
-#####`for(元素名变量:广义集合){ 循环体 }`
+### 八、C++11 基于范围的for循环
+##### `for(元素名变量:广义集合){ 循环体 }`
 
 + “元素名变量”可以是引用类型，方便修改集合元素的值
 
@@ -665,7 +665,7 @@ str::vector<std::string> s{ "hello", "world"};
 
 
 
-#### 基于范围的for循环的含义
+####  基于范围的for循环的含义
 
 ​	**想要操作某个广义集合中的所有元素，那么只需要关心**
 
@@ -686,7 +686,7 @@ for(auto& i : a) {
 
 #### 限制：基于范围的循环==仅限for语句==
 
-###九、带有初始化器的if和switch语句
+### 九、带有初始化器的if和switch语句
 
 #### if statement with a initializer (带有初始化器的if语句)
 
@@ -743,9 +743,9 @@ default:
 
 ****
 
-#类与对象初步
+# 类与对象初步
 
-###一、类的概念
+### 一、类的概念
 
 #### OO Programming Concepts（面向对象编程的概念）
 
@@ -758,7 +758,7 @@ default:
 
 
 
-####Features of OO(面向对象的特征)：*A PIE*
+#### Features of OO(面向对象的特征)：*A PIE*
 
 + Abstraction（抽象）
 + Polymorphism（多态）
@@ -776,7 +776,7 @@ default:
 
 
 
-####How to define Objects(如何定义对象)
+#### How to define Objects(如何定义对象)
 
 ​	**An object is an instance of a class(对象是类的实例)**
 
@@ -798,7 +798,7 @@ default:
 
 
 
-###二、避免头文件被多次包含：
+### 二、避免头文件被多次包含：
 1.
 
 ```C++
@@ -812,7 +812,7 @@ default:
 
 
 
-###三、对象指针与动态对象
+### 三、对象指针与动态对象
 + 箭头运算符`->`：用指针访问对象成员（==指针变量用箭头，普通对象用点）
 + 在函数声明的对象都在栈中创建，函数返回，则对象被销毁
 	==为保留对象，可以用new运算符在堆上创建它==
@@ -820,7 +820,7 @@ default:
 	
 	
 
-###四、成员初始化次序：
+### 四、成员初始化次序：
 执行次序：
 
 > 就地初始化（==定义时==）->构造函数初始化列表（==构造函数括号前==）->在==Ctor函数体==中为成员赋值
@@ -837,7 +837,7 @@ default:
 
 # 类与对象进阶
 
-###一、声明declare和定义definition
+### 一、声明declare和定义definition
 + A declaration is what the ==compiler== needs to accept references to that identifier.
 例：
 ```C++
@@ -860,19 +860,19 @@ class foo{};
 
 
 
-###二、代理构造：一个函数可以调用另外的构造函数
+### 二、代理构造：一个函数可以调用另外的构造函数
 + Avoiding recursive calls of target constructers(避免递归调用目标ctor)
 
 
 
-###三、不可变类/对象
+### 三、不可变类/对象
 + 所有数据域均设置为私有属性
 + 没有更改器函数setter
 + 也没有能够返回可变数据域对象的引用
 
 
 
-###四、实例成员和静态成员
+### 四、实例成员和静态成员
 1.静态成员的声明
 + 在类定义中，关键字`static`声明不绑定到类实例的成员（该成员无需创建对象即可访问）
 `类名::静态成员`
@@ -884,7 +884,7 @@ class foo{};
 
 
 
-###五、拷贝构造函数
+### 五、拷贝构造函数
 + 拷贝构造：用一个对象==初始化==另一个同类对象
 + 声明拷贝构造函数
 ```C++
@@ -902,7 +902,7 @@ Circle c5{c1}; 	//C++11
 
 
 
-###六、浅拷贝和深拷贝
+### 六、浅拷贝和深拷贝
 + Shallow Copy：数据域是一个指针，那么只拷贝指针的地址，而非指针指向的内容
 + Deep Copy：拷贝指针指向的内容
 
@@ -918,7 +918,7 @@ Employee(const Employee& e) {
 
 
 
-###七、C++14的字符串字面量
+### 七、C++14的字符串字面量
 C++14将运算符`""s`进行了重载：
 ```C++
 auto hello = "Hello!"s;	//hello为sting类型
@@ -933,34 +933,34 @@ cout << s2.size() << " " << s2 << endl;	//8 abc^@^@def
 
 ****
 
-#继承与多态
+# 继承与多态
 
 
 
-##继承
-###一、避免一个类被继承（C++11）
+## 继承
+### 一、避免一个类被继承（C++11）
 C++引入`final`==特殊标识符==，可以使类不能被继承
 `class B final{};`
 
 
 
-###二、派生类继承的成员
-#####C++11：派生类不继承的特殊函数：
+### 二、派生类继承的成员
+##### C++11：派生类不继承的特殊函数：
 
 1. 析构函数
 2. 友元函数
 
-#####继承基类==构造函数==
+##### 继承基类==构造函数==
 
 + `using A::A //在派生类中用这句话，继承所有基类ctor`
 + 不能仅继承指定的某个ctor
 
-#####调用基类构造函数
+##### 调用基类构造函数
 + 若派生类==成员==也需要初始化，则可在==派生类构造函数中==调用基类构造函数
 
 
 
-###三、名字隐藏与重定义
+### 三、名字隐藏与重定义
 #### 基类同名函数被隐藏：内部作用域的名字隐藏外部作用域的（同名）名字
 
 #### 派生类视为内部作用域、基类视为外部作用域
@@ -974,14 +974,14 @@ C++引入`final`==特殊标识符==，可以使类不能被继承
 
 
 
-##多态(Polymorphism)的定义
+## 多态(Polymorphism)的定义
 
-####广义的多态：==不同类型的实体/对象==对于==同一消息==有==不同的响应==，就是OOP中的多态性
+#### 广义的多态：==不同类型的实体/对象==对于==同一消息==有==不同的响应==，就是OOP中的多态性
 ​	**两种表现形式：**
 
 + 重载多态
 + 子类型多态：不同的对象调用==同名==重定义函数，表现出不同的行为
-####实现：Binding
+#### 实现：Binding
 ​	**Binding：确定具有多态性的语句调用哪个函数的过程**
 
 ​	**Static Binding**
@@ -997,10 +997,10 @@ C++引入`final`==特殊标识符==，可以使类不能被继承
 
 
 
-##实现运行时多态
+## 实现运行时多态
 + Virtual Function
 + Override(覆写)：在派生类中重定义一个虚函数
-####多态的例子
+#### 多态的例子
 
 ```C++
 class A {
@@ -1028,27 +1028,27 @@ int main() {
 
 ​	**用途：可以用父类指针访问子类对象成员**
 
-####虚函数的传递性
+#### 虚函数的传递性
 + 基类定义了虚同名函数，那么派生类中的同名函数自动变为虚函数
 
-####用override和final避免错误
+#### 用override和final避免错误
 + 在派生类虚函数后加override，可检测函数是否是同名函数`void foo() override;`
 + final标识符，指定派生类不能再覆写虚函数 `void foo() final;`
 
 
 
-##访问控制属性
+## 访问控制属性
 + A **protected** data field or a protected function in a base class can be accessed by name in its derived classes.保护属性的数据或函数可被派生类成员访问
 
 
 
 
-##抽象类与动态类型转换
-####抽象函数/纯虚函数`virtual double getArea() = 0;`
+## 抽象类与动态类型转换
+#### 抽象函数/纯虚函数`virtual double getArea() = 0;`
 + 含有抽象函数的基类称为抽象类；
 + 子类必须实现抽象函数getArea()才能实例化
 
-####动态类型转换
+#### 动态类型转换
 ​	**`dynamic_cast`运算符：**
 
 + 沿继承层级向上、向下及侧向转换到类的指针和引用
@@ -1073,7 +1073,7 @@ void printObject(Shape& shape){
 }
 ```
 
-####Upcasting and Downcasting（向上/向下转型）
+#### Upcasting and Downcasting（向上/向下转型）
 + ==upcasting==: Assigning a pointer of a derived class type to a pointer of its base class type**(派生类指针赋给基类)**
 + ==downcasting==: Assigning a pointer of a base class type to a pointer of its derived class type**(基类指针赋给派生类)**
 + 基类是上、派生类是下
@@ -1083,7 +1083,7 @@ void printObject(Shape& shape){
 + ***可以将派生类对象截断，只使用继承来的信息***
 + ***不能将基类对象加长，无中生有变出派生类对象***
 
-####typeid运行时类型检查
+#### typeid运行时类型检查
 ​	**_typeid_ is used to obtain the information about the class of the object（typeid用于获取对象所属的类的信息）**
 
 + typid returns a reference to an object of class type_info.(**typeid运算符返回一个type_info对象的引用**)
@@ -1101,11 +1101,11 @@ A a{};
 
 ****
 
-#文件输入输出流
+# 文件输入输出流
 
-###一、文件系统FileSystem
+### 一、文件系统FileSystem
 
-####文件系统简介
+#### 文件系统简介
 
 ​	**==C++ 17== std::filesystem provides facilities for performing operations on file systems and their components,such as paths,regular files,and directories.标准库的filesystem提供在文件系统与其组件，例如路径、常规文件与目录上进行操作的方法 **
 
@@ -1170,14 +1170,14 @@ cout << "C: free space: " << fs::space(p).free << endl;
 
 
 
-###二、文件I/O流
+### 二、文件I/O流
 
 #### What is a stream?
 
 + A stream is a sequence of data.（流是一个数据序列）
 + ==输入输出都是相对于程序的==；数据输入进程序->输入流；程序向外输出数据->输出流
 
-####带缓冲区的输入输出
+#### 带缓冲区的输入输出
 
 + ==C++的I/O流是有内部缓冲区的==
 
@@ -1268,7 +1268,7 @@ int main() {
 
 
 
-###三、格式化输出
+### 三、格式化输出
 
 #### setw manipulator(‘设置域宽’控制符)
 
@@ -1285,7 +1285,7 @@ int main() {
 + setw()默认为setw(0)， 即按实际长度输出
 + 如果输出的数值占用的宽度超过setw(int n ) 设置的宽度，则按实际宽度输出
 
-####setprecision manipulator ”设置浮点精度“控制符
+#### setprecision manipulator ”设置浮点精度“控制符
 
 + setprecision(int n);
 + 控制显示**浮点数**的有效位
@@ -1373,9 +1373,9 @@ int main() {
 
 
 
-###四、二进制文件读写
+### 四、二进制文件读写
 
-####fstream与文件打开模式
+#### fstream与文件打开模式
 
 ​	**fstream = ifstream + ofstream**
 
@@ -1432,7 +1432,7 @@ int main() {
 
 
 
-####二进制输入输出简介
+#### 二进制输入输出简介
 
 ​	**文本文件text file与二进制文件 binary file**
 
@@ -1549,7 +1549,7 @@ namespace fs = std::filesystem;
 
 
 
-###五、随机访问文件
+### 五、随机访问文件
 
 #### File Positioner 文件位置指示器
 
@@ -1609,7 +1609,7 @@ namespace fs = std::filesystem;
 
 ****
 
-#运算符重载
+# 运算符重载
 
 
 
@@ -1654,7 +1654,7 @@ namespace fs = std::filesystem;
 
 
 
-####C++11：Left Value
+#### C++11：Left Value
 
 + 左值指定了一个函数或者对象，它是一个可以取地址的表达式（能取地址的就是左值）
 
@@ -1779,7 +1779,7 @@ double& Vec2D::operator[] (const int &index) {	// lvalue
 
 > --, ++, -(负号)
 
-####prepositive unary operators前置单目运算符: -(负)，*(解引用)
+#### prepositive unary operators前置单目运算符: -(负)，*(解引用)
 
 #### 当编译器遇到 ==@obj;==时
 
@@ -1857,7 +1857,7 @@ Vec2D& Vec2D::operator++(int dummy) {	// a++,dummy没有用
 
 
 
-###七、重载流操作运算符
+### 七、重载流操作运算符
 
 ​	**<< 和 >> 是在ostream 和istream类中定义(重载)的，均为二元运算符**
 
@@ -1885,9 +1885,9 @@ cout << v1;
 
 
 
-###八、重载对象(类型)转换运算符
+### 八、重载对象(类型)转换运算符
 
-####对象转换
+#### 对象转换
 
 + 将Vec2D对象转换为double数时，我们可以求对象的范数，即向量的长度
 + 定义一个运算符函数执行类型转换
@@ -1903,18 +1903,18 @@ double e = static_cast<double>(v1);	// e: 5.0
 
 
 
-###九、重载赋值运算符
+### 九、重载赋值运算符
 
-####重载=运算符时，会改变其默认工作方式
+#### 重载=运算符时，会改变其默认工作方式
 
-####一般情况下，如果拷贝构造函数需要执行深拷贝，那么赋值运算符需要重载
+#### 一般情况下，如果拷贝构造函数需要执行深拷贝，那么赋值运算符需要重载
 
 ```C++
 const Employee operator=(const Employee& e);	// 只支持一次赋值
 employee1 = employee2;
 ```
 
-####默认赋值运算符的浅拷贝
+#### 默认赋值运算符的浅拷贝
 
 ```C++
 Employee e1{"Jack", Date(1999, 5, 3), Gender::male};
@@ -2059,7 +2059,7 @@ catch (int) {	// 仅有类型
 
 
 
-###Vec3D + []越界异常代码示例
+### Vec3D + []越界异常代码示例
 
 > 注：size_t 全称 size type, 是一个“用来记录大小的数据类型”
 >
@@ -2100,7 +2100,7 @@ public:
 };
 ```
 
-####RangeException.h
+#### RangeException.h
 
 ```C++
 #pragma once
@@ -2354,7 +2354,7 @@ function2{
 
 
 
-####Rethrowing Another Exception
+#### Rethrowing Another Exception
 
 ​	**An exception handler can throw another exception other than the captured exception(异常处理程序可以重新抛出另一个不同于已经捕获的异常)**
 
@@ -2433,9 +2433,9 @@ try{
 
 # 模板初步
 
-###一、模板与泛型编程
+### 一、模板与泛型编程
 
-####Meta-Programming and Generic Programming （元编程与泛型编程）
+#### Meta-Programming and Generic Programming （元编程与泛型编程）
 
 ​	**Concepts of X-Programming（编程的概念）**
 
