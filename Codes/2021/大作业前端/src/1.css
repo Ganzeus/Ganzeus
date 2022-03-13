@@ -1,0 +1,142 @@
+body{background-image: url("bg2.jpeg"); background-size: cover; background-repeat: no-repeat}
+span.block{padding: 10px; text-align: center}
+input, select{
+    width: 200px;
+    padding: 12px 20px;
+    margin: 8px 100px;
+    display: block;
+    border:1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+/* 创建两列 */
+/* Left column */
+.leftcolumn {
+    float: left;
+    width: 25%;
+}
+
+/* 右侧栏 */
+.rightcolumn {
+    float: left;
+    width: 75%;
+    height: auto;
+}
+/* 导航条 */
+.topnav {
+    overflow: hidden;
+    background-color: forestgreen;
+}
+
+/* 导航条链接 */
+.topnav a {
+    float: left;
+    display: block;
+    color: #f2f2f2;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+/* 链接颜色修改 */
+.topnav a:hover {
+    background-color: #ddd;
+    color: black;
+}
+/* 垂直导航条 */
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 200px;
+    height: 500px;
+    background-color: cadetblue;
+}
+
+li a {
+    display: block;
+    color: #000;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+/* 鼠标移动到选项上修改背景颜色 */
+li a:hover {
+    background-color: cornflowerblue;
+    color: white;
+}
+/* 表格 */
+#customers
+{
+    font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
+    width:60%;
+    border-collapse:collapse;
+}
+#customers td, #customers th
+{
+    font-size:1em;
+    border:1px solid #98bf21;
+    padding:3px 7px 2px 7px;
+}
+#customers th
+{
+    font-size:1.1em;
+    text-align:left;
+    padding-top:5px;
+    padding-bottom:4px;
+    background-color:#A7C942;
+    color: #ffffff;
+}
+#customers tr.alt td
+{
+    color:#000000;
+    background-color:#EAF2D3;
+}
+
+input[type= text], input[type=date],input[type=file], select{
+    width: 70%;
+    padding: 5px 20px;
+    margin: 8px 50px;
+    float: right;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+input[type=radio] {
+    width: 10%;
+    padding: 5px 20px;
+    margin: 8px 0px 8px 100px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+input[type=submit], input[type=reset]{
+    width: 50%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    margin: 8px 140px;
+    float: right;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+input[type=button] {
+    width: 300px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    margin: 8px 150px;
+    float: left;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+input[type=submit]:hover, input[type=reset]:hover, input[type=button]:hover {
+    background-color: #45a049;
+}
+.center{
+    text-align: center;
+}

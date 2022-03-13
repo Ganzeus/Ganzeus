@@ -1,0 +1,4 @@
+从键盘读入信息，需要用组合键才能将EOF发送给程序：
+
+Ctrl - D (Unix)
+Ctrl - Z (Microsoft)

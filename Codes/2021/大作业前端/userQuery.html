@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>员工信息管理</title>
+    <link rel="stylesheet" type="text/css" href="src/1.css">
+    <script type="text/javascript">
+        function search(){
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if(xmlHttp.readyState==4 && xmlHttp.status==200){
+                    var data = xmlHttp.responseText;
+                    var jsonobj = eval("("+data+")");
+                    document.getElementById("userName").innerText=jsonobj.userName;
+                    document.getElementById("passWord").innerText=jsonobj.passWord;
+                    document.getElementById("sex").innerText=jsonobj.sex;
+                    document.getElementById("sal").innerText=jsonobj.sal;
+                    document.getElementById("dept").innerText=jsonobj.dept;
+                    document.getElementById("hiredate").innerText=jsonobj.hiredate;
+                }
+            }
+            var userId = document.getElementById("userId");
+            xmlHttp.open("get","/Data_Management_System_war_exploded/findUserByIdServlet?"+userId.name+"="+userId.value,true);
+            xmlHttp.send();
+        }
+    </script>
+</head>
+<body>
+<div style="text-align: center; padding: 50px">
+    <h1 style="color: orangered; font-size: 50px" >数据管理系统</h1>
+</div>
+<div class="topnav">
+    <a href="personnelManage.html">员工信息管理</a>
+    <a href="Statistic.html">员工数据统计</a>
+    <a href="Excel.html">Excel处理</a>
+</div>
+<div class="leftcolumn">
+    <ul>
+        <li><a href="userAdd.html">添加员工</a></li>
+        <li><a href="userQuery.html">查询员工</a></li>
+        <li><a href="#">查询所有员工</a></li>
+        <li><a href="userDelete.html">删除员工</a></li>
+        <li><a href="#">删除所有员工</a></li>
+    </ul>
+</div>
+<div class="rightcolumn">
+    <form action="#" method="get">
+        <input type="text" id="userId" name="userId" placeholder="输入要查询的用户ID" style="width: 30%; margin-left:150px; float: left"/>
+        <input type="button" value="查询" onclick="search()">
+        <table id="customers" class="center">
+            <tr>
+                <td>用户名:</td><td id="userName">??????????????</td>
+            </tr>
+            <tr class="alt">
+                <td>密码:</td><td id="passWord"></td>
+            </tr>
+            <tr>
+                <td>性别:</td><td id="sex"></td>
+            </tr>
+            <tr class="alt">
+                <td>薪水:</td><td id="sal"></td>
+            </tr>
+            <tr>
+                <td>职位:</td><td id="dept"></td>
+            </tr>
+            <tr class="alt">
+                <td>入职日期:</td><td id="hiredate"></td>
+            </tr>
+        </table>
+    </form>
+</div>
+</body>
+</html>
