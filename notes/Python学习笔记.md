@@ -742,7 +742,7 @@ snow(level, 400)
 turtle.done()       # 保持绘图窗口
 ```
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220112193848288.png" alt="image-20220112193848288" style="zoom:50%;" />
+![image-20220112193848288.png (1287×1235) (raw.githubusercontent.com)](https://raw.githubusercontent.com/Ganzeus/Ganzeus/master/img/typora-user-images/image-20220112193848288.png)
 
 ****
 
@@ -926,7 +926,7 @@ print(chr(97))      # >>a
 
 
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220115001040025.png" alt="image-20220115001040025" style="zoom:50%;" />
+![image-20220115001040025.png (2226×1158) (raw.githubusercontent.com)](../img/typora-user-images/image-20220115001040025-16534866485111.png)
 
 
 
@@ -1331,11 +1331,11 @@ print(lst)      # >>(2, 4)
 
 #### 列表生成式
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220118131413248.png" alt="image-20220118131413248" style="zoom: 33%;" />
+<img src="../img/typora-user-images/image-20220118131413248-16534867029283.png" alt="image-20220118131413248.png (2077×1115) (raw.githubusercontent.com)" style="zoom:50%;" />
 
 #### 元组生成式
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220118131520579.png" alt="image-20220118131520579" style="zoom: 33%;" />
+ <img src="../img/typora-user-images/image-20220118131520579-16534867510965.png" alt="image-20220118131520579.png (1582×280) (raw.githubusercontent.com)" style="zoom:25%;" />
 
 
 
@@ -1588,7 +1588,7 @@ for i in x.items():
 
 输入若干行，每行一个单词。
 
-按单词出现次数从高到低打出所有单词。次数相同的，按照字典顺序排。<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220120144403530.png" alt="image-20220120144403530" style="zoom:25%;" />
+按单词出现次数从高到低打出所有单词。次数相同的，按照字典顺序排。<img src="https://raw.githubusercontent.com/Ganzeus/Ganzeus/master/img/typora-user-images/image-20220120144403530.png" alt="image-20220120144403530.png (372×813) (raw.githubusercontent.com)" style="zoom:25%;" />
 
 ##### 思路：读入字典元素后，以元组形式放到列表中排序（==字典无法排序==）
 
