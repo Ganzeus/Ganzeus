@@ -5079,7 +5079,7 @@ plt.show()
 
 ##### 多层雷达图
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207225457128.png" alt="image-20220207225457128" style="zoom:33%;" />
+ <img src="../img/typora-user-images/image-20220207225457128-16534887165145.png" alt="image-20220207225457128.png (1116×832) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 import matplotlib.pyplot as plt
@@ -5109,7 +5109,7 @@ plt.show()
 
 #### 一个窗口画多幅图
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207230432876.png" alt="image-20220207230432876" style="zoom:33%;" />
+ ![image-20220207230432876.png (1273×1314) (raw.githubusercontent.com)](../img/typora-user-images/image-20220207230432876-16534887337687.png)
 
 ```python
 # import以及drawRadar, drawPie,drawPlot函数略
@@ -5413,7 +5413,7 @@ def getBingPictures(word, n):  # 下载 n张 bing图片搜来的关于word的图
 getBingPictures('熊猫', 5)
 ```
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220213132517157.png" alt="image-20220213132517157" style="zoom:50%;" />
+ <img src="../img/typora-user-images/image-20220213132517157-165348880529111.png" alt="image-20220213132517157.png (400×231) (raw.githubusercontent.com)" style="zoom: 50%;" />
 
 
 
@@ -5427,13 +5427,13 @@ getBingPictures('熊猫', 5)
 2. BeautifulSoup库（速度是正则表达式的约几分之一）
 3. selenium或pyppeteer中的浏览器对象的查找元素函数（速度是正则表达式的约百分之一，用在需要模拟在网页中进行输入，点击按钮等操作的时候）
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220213135215644.png" alt="image-20220213135215644" style="zoom:33%;" />
+<img src="../img/typora-user-images/image-20220213135215644-165348883361513.png" alt="image-20220213135215644.png (1872×988) (raw.githubusercontent.com)" style="zoom:33%;" />
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220213135236279.png" alt="image-20220213135236279" style="zoom:50%;" />
+<img src="../img/typora-user-images/image-20220213135236279-165348886277515.png" alt="image-20220213135236279.png (1806×836) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220213135256522.png" alt="image-20220213135256522" style="zoom:50%;" />
+<img src="../img/typora-user-images/image-20220213135256522-165348888738217.png" alt="image-20220213135256522.png (1766×770) (raw.githubusercontent.com)" style="zoom:33%;" />
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220213135309203.png" alt="image-20220213135309203" style="zoom:50%;" />
+![image-20220213135309203.png (1826×766) (raw.githubusercontent.com)](../img/typora-user-images/image-20220213135309203-165348890323719.png)
 
 
 
@@ -5528,7 +5528,7 @@ soup = bs4.BeautifulSoup(html, 'html.parser')
 </html>
 ```
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220213143112124.png" alt="image-20220213143112124" style="zoom: 33%;" />
+ <img src="../img/typora-user-images/image-20220213143112124-165348893162321.png" alt="image-20220213143112124.png (983×399) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ##### 用BeautifulSoup对象寻找想要的tag
 
@@ -5646,7 +5646,7 @@ loop.run_until_complete(getStockInfo(url))
 
 + 输出结果
 
-   <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220213171652778.png" alt="image-20220213171652778" style="zoom:25%;" />
+   <img src="../img/typora-user-images/image-20220213171652778-165348895572023.png" alt="image-20220213171652778.png (345×801) (raw.githubusercontent.com)" style="zoom:33%;" />
 
   
 
@@ -6101,7 +6101,7 @@ tree = ttk.TreeView(win, . . .)
 
   
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220211235820054.png" alt="image-20220211235820054" style="zoom: 50%;" />:
+<img src="../img/typora-user-images/image-20220211235820054-165348900513025.png" alt="image-20220211235820054.png (386×242) (raw.githubusercontent.com)" style="zoom:33%;" /> 
 
 ```python
 import tkinter as tk
@@ -6144,7 +6144,7 @@ win.mainloop()      # 显示窗口
 
 ##### 控件均匀分布实现
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212003601838.png" alt="image-20220212003601838" style="zoom: 25%;" />
+ <img src="../img/typora-user-images/image-20220212003601838-165348903340127.png" alt="image-20220212003601838.png (1292×864) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 win.columnconfigure(0, weight=1)    # 指定第0列增量分配权重为1
@@ -6166,7 +6166,7 @@ etPassword.grid(row=1, column=1, padx=5, pady=5, sticky="EWSN")  # 占满单元�
 btLogin.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="SW")  # 西南，即左下角
 ```
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212004741566.png" alt="image-20220212004741566" style="zoom: 25%;" />
+ ![Ganzeus/image-20220212004741566.png at master · Ganzeus/Ganzeus (github.com)](../img/typora-user-images/image-20220212004741566-165348905034529.png)
 
 
 
@@ -6182,7 +6182,7 @@ btLogin.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="SW")  # 西�
 
 #### 示例
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212194523385.png" alt="image-20220212194523385" style="zoom:33%;" />
+ <img src="../img/typora-user-images/image-20220212194523385-165348907845431.png" alt="image-20220212194523385.png (1327×875) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 import tkinter as tk
@@ -6282,7 +6282,7 @@ lb.bind("<ButtonPress-1>", mouse_down)  # 鼠标左键按下事件
 
 #### 示例：用户登录
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212202022446.png" alt="image-20220212202022446" style="zoom:33%;" />
+ <img src="../img/typora-user-images/image-20220212202022446-165348909994633.png" alt="image-20220212202022446.png (670×518) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
 ```python
 import tkinter as tk
@@ -6344,7 +6344,7 @@ win.mainloop()
 
 #### 实例：Python火锅店点菜系统
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212210414130.png" alt="image-20220212210414130" style="zoom:50%;" />
+ <img src="../img/typora-user-images/image-20220212210414130-165348911883135.png" alt="image-20220212210414130.png (907×580) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 import tkinter as tk
@@ -6482,7 +6482,7 @@ main()
 
 #### 实例：菜单和编辑框
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212220009177.png" alt="image-20220212220009177" style="zoom: 33%;" />
+ <img src="../img/typora-user-images/image-20220212220009177-165348913613637.png" alt="image-20220212220009177.png (987×645) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 import tkinter as tk
@@ -6612,11 +6612,11 @@ main()
 
 #### 示例
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222000293.png" alt="image-20220212222000293" style="zoom:33%;" /> <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222021102.png" alt="image-20220212222021102" style="zoom:33%;" /> <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222038018.png" alt="image-20220212222038018" style="zoom:33%;" />
+ <img src="../img/typora-user-images/image-20220212222000293-165348917221839.png" alt="image-20220212222000293.png (818×259) (raw.githubusercontent.com)" style="zoom:25%;" /> <img src="../img/typora-user-images/image-20220212222021102-165348920137841.png" alt="image-20220212222021102.png (413×290) (raw.githubusercontent.com)" style="zoom:25%;" /> <img src="../img/typora-user-images/image-20220212222038018-165348921935843.png" alt="image-20220212222038018.png (407×293) (raw.githubusercontent.com)" style="zoom:25%;" />
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222244491.png" alt="image-20220212222244491" style="zoom: 33%;" /> <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222056779.png" alt="image-20220212222056779" style="zoom:33%;" /><img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222112540.png" alt="image-20220212222112540" style="zoom:33%;" /><img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222134064.png" alt="image-20220212222134064" style="zoom:33%;" /><img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222228385.png" alt="image-20220212222228385" style="zoom:33%;" />
+<img src="../img/typora-user-images/image-20220212222244491-165348924464145.png" alt="image-20220212222244491.png (313×209) (raw.githubusercontent.com)" style="zoom: 33%;" /> <img src="https://raw.githubusercontent.com/Ganzeus/Ganzeus/master/img/typora-user-images/image-20220212222056779.png" alt="image-20220212222056779.png (399×289) (raw.githubusercontent.com)" style="zoom:25%;" /><img src="../img/typora-user-images/image-20220212222112540-165348933001247.png" alt="image-20220212222112540.png (268×300) (raw.githubusercontent.com)" style="zoom:25%;" /><img src="../img/typora-user-images/image-20220212222134064-165348934662649.png" alt="image-20220212222134064.png (303×294) (raw.githubusercontent.com)" style="zoom:25%;" /><img src="../img/typora-user-images/image-20220212222228385-165348936540351.png" alt="image-20220212222228385.png (310×207) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212222159337.png" alt="image-20220212222159337" style="zoom:33%;" />
+ <img src="../img/typora-user-images/image-20220212222159337-165348938590453.png" alt="image-20220212222159337.png (1251×822) (raw.githubusercontent.com)" style="zoom: 25%;" />
 
 ```python
 import tkinter as tk
@@ -6705,7 +6705,7 @@ main()
 
    
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212224429875.png" alt="image-20220212224429875" style="zoom:33%;" />
+ <img src="../img/typora-user-images/image-20220212224429875-165348941202255.png" alt="image-20220212224429875.png (785×610) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 import tkinter as tk
@@ -6800,7 +6800,7 @@ gWin.mainloop()  # 显示窗口
 
 
 
- <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212224658607.png" alt="image-20220212224658607" style="zoom:33%;" /><img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220212224923501.png" alt="image-20220212224923501" style="zoom:33%;" />
+ <img src="../img/typora-user-images/image-20220212224658607-165348942854557.png" alt="image-20220212224658607.png (872×823) (raw.githubusercontent.com)" style="zoom:25%;" /><img src="../img/typora-user-images/image-20220212224923501-165348946128059.png" alt="image-20220212224923501.png (958×879) (raw.githubusercontent.com)" style="zoom:25%;" />
 
 ```python
 import numpy as np
