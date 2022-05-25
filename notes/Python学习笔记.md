@@ -1588,7 +1588,7 @@ for i in x.items():
 
 输入若干行，每行一个单词。
 
-按单词出现次数从高到低打出所有单词。次数相同的，按照字典顺序排。<img src="https://raw.githubusercontent.com/Ganzeus/Ganzeus/master/img/typora-user-images/image-20220120144403530.png" alt="image-20220120144403530.png (372×813) (raw.githubusercontent.com)" style="zoom:25%;" />
+按单词出现次数从高到低打出所有单词。次数相同的，按照字典顺序排。 <img src="https://raw.githubusercontent.com/Ganzeus/Ganzeus/master/img/typora-user-images/image-20220120144403530.png" alt="image-20220120144403530.png (372×813) (raw.githubusercontent.com)" style="zoom:25%;" />
 
 ##### 思路：读入字典元素后，以元组形式放到列表中排序（==字典无法排序==）
 
@@ -1672,7 +1672,7 @@ print(a)        # >>{1, (3, 4), 'ok'}
 
 #### 集合例题：统计不重复单词的个数
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220120150821364.png" alt="image-20220120150821364" style="zoom:25%;" />
+ <img src="../img/typora-user-images/image-20220120150821364-16534872243029.png" alt="image-20220120150821364.png (392×905) (raw.githubusercontent.com)" style="zoom:25%;" />
 
 ##### 思路
 
@@ -3513,7 +3513,7 @@ cur.close()
 db.close()
 ```
 
-输出：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220123144850839.png" alt="image-20220123144850839" style="zoom: 50%;" />
+输出：<img src="../img/typora-user-images/image-20220123144850839-165348728627211.png" alt="image-20220123144850839.png (646×235) (raw.githubusercontent.com)" style="zoom: 50%;" />
 
 ##### 例2
 
@@ -3569,7 +3569,7 @@ cur.close()
 db.close()
 ```
 
-输出：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220123150837597.png" alt="image-20220123150837597" style="zoom:50%;" />
+输出：<img src="../img/typora-user-images/image-20220123150837597-165348738748113.png" alt="image-20220123150837597.png (611×121) (raw.githubusercontent.com)" style="zoom: 50%;" />
 
 
 
@@ -4074,7 +4074,7 @@ book.remove_sheet(book['Sample2'])        # 删除名为Sample2的工作表
 book.save('sample.xlsx')    # 保存文件
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205022451299.png" alt="image-20220205022451299" style="zoom: 25%;" />
+效果：<img src="../img/typora-user-images/image-20220205022451299-165348743885715.png" alt="image-20220205022451299.png (1384×1286) (raw.githubusercontent.com)" style="zoom: 25%;" />
 
 
 
@@ -4098,7 +4098,7 @@ for sheet in book.worksheets:
 book.save('excel1.xlsx')
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205022349825.png" alt="image-20220205022349825" style="zoom:33%;" />
+效果：<img src="../img/typora-user-images/image-20220205022349825-165348748024917.png" alt="image-20220205022349825.png (992×333) (raw.githubusercontent.com)" style="zoom:50%;" />
 
 
 
@@ -4116,7 +4116,7 @@ for sheet in book:
 book.save('tmp/excel2.xlsx')
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205022430997.png" alt="image-20220205022430997" style="zoom:33%;" />
+效果：<img src="../img/typora-user-images/image-20220205022430997-165348751440019.png" alt="image-20220205022430997.png (1049×313) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
 
 
@@ -4148,7 +4148,7 @@ sheet['C2'].alignment = Alignment(horizontal='left', vertical='center')
 book.save("tmp/style.xlsx")
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205024031224.png" alt="image-20220205024031224" style="zoom:33%;" />
+效果：<img src="../img/typora-user-images/image-20220205024031224-165348756046921.png" alt="image-20220205024031224.png (781×372) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
 
 
@@ -4186,9 +4186,9 @@ newImg.show()   # 显示图像
 
 balloons.jpg:                                                                                               balloons_half.jpg
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205025715549.png" alt="image-20220205025715549" style="zoom:25%;" /><img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205025750942.png" alt="image-20220205025750942" style="zoom:25%;" />
+<img src="../img/typora-user-images/image-20220205025715549-165348759968623.png" alt="image-20220205025715549.png (1194×914) (raw.githubusercontent.com)" style="zoom: 25%;" /><img src="../img/typora-user-images/image-20220205025750942-165348763396625.png" alt="image-20220205025750942.png (1191×920) (raw.githubusercontent.com)" style="zoom:25%;" />
 balloons_thumb.png
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205025807976.png" alt="image-20220205025807976" style="zoom:25%;" />
+<img src="../img/typora-user-images/image-20220205025807976-165348767154127.png" alt="image-20220205025807976.png (411×353) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
 
 
@@ -4264,7 +4264,7 @@ newImg.show()
 
 效果：
 
-balloon9.jpg:<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205124355638.png" alt="image-20220205124355638" style="zoom:25%;" />
+balloon9.jpg:<img src="../img/typora-user-images/image-20220205124355638-165348771424029.png" alt="image-20220205124355638.png (1190×1201) (raw.githubusercontent.com)" style="zoom:25%;" />
 
 
 
@@ -4290,7 +4290,7 @@ img = makeSketch(img, 15)   # 阈值threshold为15
 img.show()
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205125834976.png" alt="image-20220205125834976" style="zoom:25%;" />
+效果：<img src="../img/typora-user-images/image-20220205125834976-165348780918731.png" alt="image-20220205125834976.png (819×765) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
 
 
@@ -4331,14 +4331,14 @@ imgSrc.paste(img, (imgSrc.size[0] - img.size[0] - 30,
 imgSrc.show()
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205131510881.png" alt="image-20220205131510881" style="zoom:25%;" />
+效果：<img src="../img/typora-user-images/image-20220205131510881-165348783532533.png" alt="image-20220205131510881.png (764×763) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 
 #### 图像上绘图和文字
 
 ##### 照片的exif信息：包含图片的属性和个人信息.Pillow库提供了函数获取这些信息
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220205132114008.png" alt="image-20220205132114008" style="zoom:25%;" />：
+ <img src="../img/typora-user-images/image-20220205132114008-165348787154935.png" alt="image-20220205132114008.png (781×1069) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 from PIL import Image, ImageDraw, ImageFont, ExifTags
@@ -4773,7 +4773,7 @@ print(df)
 + 需要openpyxl（对.xlsx)和xlrd或xlwt支持（老的.xls)
 + 读取的每一张工作表都是一个DataFrame
 
-excel_sample.xlsx：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220206160458221.png" alt="image-20220206160458221" style="zoom: 25%;" />
+excel_sample.xlsx：<img src="../img/typora-user-images/image-20220206160458221-165348790575637.png" alt="image-20220206160458221.png (779×1218) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 import pandas as pd
@@ -4815,7 +4815,7 @@ df['销售额'].to_excel(writer, sheet_name="S4")  # 只写入一列
 writer.save()
 ```
 
-new.xlsx:<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220206160558816.png" alt="image-20220206160558816" style="zoom:25%;" />
+new.xlsx:<img src="../img/typora-user-images/image-20220206160558816-165348793318139.png" alt="image-20220206160558816.png (905×1235) (raw.githubusercontent.com)" style="zoom: 25%;" />
 
 ##### pandas写csv文件
 
@@ -4853,7 +4853,7 @@ ax.set_title('我的直方图')
 plt.show()
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207193455546.png" alt="image-20220207193455546" style="zoom: 33%;" />
+效果：<img src="../img/typora-user-images/image-20220207193455546-165348796313441.png" alt="image-20220207193455546.png (682×511) (raw.githubusercontent.com)" style="zoom: 33%;" />
 
 ##### 绘制横向直方图
 
@@ -4871,7 +4871,7 @@ plt.show()
   ax.barh(y=(0.2, 0.6, 0.8, 1.2), width=(1, 2, 3, 0.5), height=0.1)
   ```
 
-  效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207193752921.png" alt="image-20220207193752921" style="zoom:33%;" />
+  效果：<img src="../img/typora-user-images/image-20220207193752921-165348798445543.png" alt="image-20220207193752921.png (676×504) (raw.githubusercontent.com)" style="zoom: 50%;" />
 
 
 
@@ -4899,7 +4899,7 @@ ax.legend()     # 在右上角显示图例说明
 plt.show()
 ```
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207211352324.png" alt="image-20220207211352324" style="zoom: 50%;" />
+效果：<img src="../img/typora-user-images/image-20220207211352324-165348800751845.png" alt="image-20220207211352324.png (634×479) (raw.githubusercontent.com)" style="zoom:50%;" />
 
 
 
@@ -4942,7 +4942,7 @@ plt.show()
 
 + `rect.get_x()`：获取rect柱子左侧的横坐标，加上`rect.get_width()/2`后得到柱子中点的横坐标
 
-效果：<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207212616152.png" alt="image-20220207212616152" style="zoom: 33%;" />
+效果：<img src="../img/typora-user-images/image-20220207211352324-165348809104647.png" alt="image-20220207211352324.png (634×479) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 
 
@@ -4950,7 +4950,7 @@ plt.show()
 
 #### 折线图和散点图
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207214325603.png" alt="image-20220207214325603" style="zoom: 33%;" />
+<img src="../img/typora-user-images/image-20220207214325603-165348811618149.png" alt="image-20220207214325603.png (1687×673) (raw.githubusercontent.com)" style="zoom:50%;" />
 
 + **蓝色部分不是一张图，是由折线图和散点图拼接而成**
 + **红色曲线也是折线图，由于点非常密集因此看成一条曲线**
@@ -4984,7 +4984,7 @@ plt.show()
 
 #### 饼图
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207215044430.png" alt="image-20220207215044430" style="zoom: 33%;" />
+<img src="../img/typora-user-images/image-20220207215044430-165348813888351.png" alt="image-20220207215044430.png (1121×755) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 ```python
 import matplotlib.pyplot as plt
@@ -5010,7 +5010,7 @@ plt.show()
 
 #### 热力图
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207222832920.png" alt="image-20220207222832920" style="zoom:33%;" />
+<img src="../img/typora-user-images/image-20220207222832920-165348817428553.png" alt="image-20220207222832920.png (1265×1009) (raw.githubusercontent.com)" style="zoom:33%;" />
 
 
 
@@ -5049,7 +5049,7 @@ plt.show()
 
 ##### 单层雷达图
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220207224210442.png" alt="image-20220207224210442" style="zoom:33%;" />
+![Ganzeus/image-20220207224210442.png at master · Ganzeus/Ganzeus (github.com)](https://github.com/Ganzeus/Ganzeus/blob/master/img/typora-user-images/image-20220207224210442.png)
 
 ```python
 import matplotlib.pyplot as plt
