@@ -1069,9 +1069,9 @@ passdays += (year-1-2012) // 400        # 加上400整数倍的闰年
 string = input()
 newstr = ""
 for i in string:
-    if ord(i) in range(97, 97+32):		# 小写字母
+    if ord(i) in range(97, 97+26):		# 小写字母
         newstr += chr(ord(i) - 32)
-    elif ord(i) in range(65, 65+32):	# 大写字母
+    elif ord(i) in range(65, 65+26):	# 大写字母
         newstr += chr(ord(i) + 32)
     else:		# 不是字母则不变
         newstr += i
@@ -1136,9 +1136,16 @@ print(b)        # >>[1, 2, 3]
 + 将列表==中的元素==乘若干遍组成==一个==新的列表
 
 ```python
-print([True] * 3)
+print([True] * 3)  # >>[True, True, True]
 a = [1, 2]
-
+b = a * 3
+print(b)        # >>[1, 2, 1, 2, 1, 2]
+print([a*3])    # >>[[1, 2, 1, 2, 1, 2]]
+c = [a] * 3
+print(c)        # >>[[1, 2], [1, 2], [1, 2]]
+a.append(3)
+print(c)        # >>[[1, 2, 3], [1, 2, 3], [1, 2, 3]]
+print(b)        # >>[1, 2, 1, 2, 1, 2]
 ```
 
 ##### 列表的切片
