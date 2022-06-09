@@ -3,7 +3,11 @@
 #define ll long long
 #define INF 0x3f3f3f3f
 using namespace std;
-const int maxn = 550;
+// 修改cout使其输出到文件
+ofstream file("out.txt");
+streambuf* x = cout.rdbuf(file.rdbuf());
+
+
 set<string> res_word = { "begin", "end", "int", "if", "else", "then", "while", "do" };
 set<string> symbol = { "+", "*", "=", "<", ">", "!=", ">=", "<=", "==", ",", ";", "(", ")" };
 map<string, string> name;   // （标识符，中文名）
@@ -451,7 +455,8 @@ void Syntax() {
 void parseProgram() {    // <程序>
     cout << "【语】推导：<程序> →<变量说明部分>;<语句部分>" << endl;
     parseExplainVars();
-    match("分号");
+    bool flag = match("分号");
+    if(!flag) return;
     parseStmtSection();
     cout << "语法分析结束" << endl;
 }
@@ -494,7 +499,10 @@ void parseStmtSection(){       // <语句部分>
     cout << "【语】推导：<语句部分> → <语句>;<语句部分p>" << endl;
     parseStmt();
     bool flag = match("分号");
-    if(!flag) return;
+    if(!flag) {
+        cout << "语法错误：语句缺少分号结尾！" << endl;
+        return;
+    }
     parseStmtSectionP();
 }
 
@@ -565,8 +573,16 @@ void parseIf(){         // <条件语句>
 
 void parseLoop(){       // <循环语句>
     cout << "【语】推导：<循环语句> → while （<条件>） do <嵌套语句>" << endl;
-    match("while");
-    match("左括号");
+    bool f1 = match("while");
+    if(!f1) {
+        cout << "语法错误：循环语句缺少while!" << endl;
+        return;
+    }
+    bool f2 = match("左括号");
+    if(!f2) {
+        cout << "语法错误：循环语句条件前缺少左括号！" << endl;
+        return;
+    }
     int st = node.size();   // 起始四元式下标
 
     pair<string, string> p = parseTerms();
@@ -673,6 +689,7 @@ pair<string, string> parseFactor(){     // <因子>
         match("标识符");
         if(idtIndex.find(next) == idtIndex.end()) {
             cout << "语义错误：变量" << next << "未声明" << endl;
+            return make_pair("0", "0");
         }
         return make_pair("标识符", next);
     }else if(isNumber(next)) {
@@ -769,7 +786,6 @@ int main() {
         output(wordTable[i]);
     }
     Syntax();
-err:
     cout << "---标识符表----" << endl;
     cout << "名称   类型   值" << endl;
     for(int i = 0; i < idtTable.size(); i++) {
@@ -777,7 +793,8 @@ err:
     }
     cout << "---目标代码---" << endl;
     for(int i = 0; i < node.size(); i++) {
-        printf("(%d) (%s, %s, %s, %s)\n", i, node[i].op.c_str(), node[i].addr1.c_str(), node[i].addr2.c_str(), node[i].dest.c_str());
+        // printf("(%d) (%s, %s, %s, %s)\n", i, node[i].op.c_str(), node[i].addr1.c_str(), node[i].addr2.c_str(), node[i].dest.c_str());
+        cout << "(" << i << ") (" << node[i].op << ", " << node[i].addr1 << ", " << node[i].addr2 << ", " << node[i].dest << ")" << endl;
     }
     return 0;
 }
