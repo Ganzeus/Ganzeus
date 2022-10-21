@@ -1,6 +1,8 @@
 郭炜Python mooc学习笔记by以禾
 
-## 基础语法
+****
+
+# 基础语法
 
 ### 一、Python初探
 
@@ -2303,8 +2305,11 @@ if result != {}:
     f.close()
 ```
 
+
+
 ****
-## Python面向对象程序设计
+
+# Python面向对象程序设计
 
 ### 类和对象
 
@@ -2728,10 +2733,9 @@ print(len(d), d[a], d[b], d[3])     # >>2 30 30 30
 
 
 
-
 ****
 
-## 正则表达式
+# 正则表达式
 
 ### 一、正则表达式的概念与组成
 
@@ -3354,11 +3358,9 @@ if m is not None:
 
 然后再split以后手动判断每一段是不是小于255
 
-
-
-
 ****
-## Python数据库编程
+
+# Python数据库编程
 
 ### 一、数据库和SQL语言简介
 
@@ -3691,11 +3693,9 @@ cur.close()
 db.close()
 ```
 
-
-
 ****
 
-## 玩转Python生态
+# 玩转Python生态
 
 ### 一、Python库的使用
 
@@ -4383,9 +4383,9 @@ def writeTextToImage(img, text, myFont):
 
 
 
-*****
+****
 
-## Python数据分析
+# Python数据分析
 
 ### 一、多维数组库numpy
 
@@ -5140,7 +5140,7 @@ plt.show()
 
 ****
 
-## Python爬虫
+# Python爬虫
 
 ### 一、爬虫的用途和原理
 
@@ -6006,11 +6006,9 @@ import time
 time.sleep(2)	# 暂停两秒，什么都不做
 ```
 
-
-
 ****
 
-## tkinter图形界面程序设计
+# tkinter图形界面程序设计
 
 ### 一、控件概述
 
