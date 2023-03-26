@@ -396,7 +396,7 @@ h = 1.746
 print("My name is %s, I am %.2fm tall." % ("tom", h)) # >>My name is tom, I am 1.75m tall.
 print("My age is %d." % 18)     # 输出一项不需要加括号 >>My age is 18.
 print("%d%s" % (18, "hello"))           # >>18hello
-print("%.2f, %.2f" % (5.225, 5.325))    # >>5.22, 5.24
+print("%.2f, %.2f" % (5.225, 5.325))    # >>5.22, 5.33
 ```
 
 ****
@@ -795,7 +795,7 @@ print(len({'tom': 2, 'jack': 3}))   # >>2   字典元素个数
 
 + a is b 为True说明a和b地址及内容相同
 + a == b 为True说明a和b内容相同，不一定指向相同地址
-+ ==a=b会使a与b指向同一个地方==,即会使`a is b`为True
++ ==a=b会使a与b指向同一个地方==,即会使`a is b`为Tru e
 
 ```python
 a = [1, 2, 3, 4]
@@ -808,7 +808,7 @@ a[2] = 'ok'
 print(b)            # >>[1, 2, 'ok', 4]
 ```
 
-+ 对于==int, float, complex, str, tuple==类型的变量a，b，只需关注`a==b`是否成立，关注`a is b`无意义。因为这些数据本身具有唯一性，不会更改，因此不会产生a指向的东西更改而b跟着变的情况
++ 对于==int, float, complex, str, tuple==类型的变量a，b，只需关注`a==b`是否成立，关注`a is b`无意义。因为这些数据本身具有唯一性，不会更改，因此  不会产生a指向的东西更改而b跟着变的情况
 + 对于==list, dict, set==类型的变量，数据本身会改变，改变a的内容，b内容也会变
 
 
@@ -838,11 +838,9 @@ print("12345678"[7:1:-2])       # >>864
 
 `s.split(x)`
 
-用字符串==x做分隔符==分隔字符串s，得到分隔后的**列表**
++ 用字符串==x做分隔符==分隔字符串s，得到分隔后的**列表**
 
-***两个相邻分隔符之间会被分隔出一个空串***
-
-
++ ***两个相邻分隔符之间会被分隔出一个空串***
 
 ```python
 a = "12..34.5346...a"
@@ -856,7 +854,7 @@ print(a.split("34"))    # >>['12..', '.5', '6...a']
 ```python
 import re
 a = 'Beautiful, is; better*than\nugly'
-print(re.split(';| |,|\*|\n', a))     # 分隔符用 | 隔开, 即 ';', ' ', '*','\n'
+print(re.split(';| |,|\*|\n', a))     # 分隔符用 | 隔开, 即逗号、空格、星号、换行符
 # >>['Beautiful', '', 'is', '', 'better', 'than', 'ugly']
 ```
 
@@ -1551,14 +1549,14 @@ print(d)        # >>{'name': 'Gumby', 'age': 42, 'height': 1.76}
 
 #### 字典相关函数
 
-| 函数     | 功能                                |
-| -------- | ----------------------------------- |
-| clear()  | 清空字典                            |
-| keys()   | 取字典的键的序列                    |
-| items()  | 取字典的元素的序列，可用于遍历字典  |
-| values() | 取字典的值序列                      |
-| pop(x)   | 删除键为x的元素，如果不存在则抛异常 |
-| copy()   | 浅拷贝                              |
+| 函数     | 功能                                       |
+| -------- | ------------------------------------------ |
+| clear()  | 清空字典                                   |
+| keys()   | 取字典的键的序列                           |
+| items()  | 取字典的元素（元组）的序列，可用于遍历字典 |
+| values() | 取字典的值序列                             |
+| pop(x)   | 删除键为x的元素，如果不存在则抛异常        |
+| copy()   | 浅拷贝                                     |
 
 > 上述‘序列’, 不是指list, tuple 或 set
 
@@ -1728,6 +1726,7 @@ while 1:
         n = int(input())
         if n not in d:   # 不存在则次数为1
             d[n] = [1, index]
+            index += 1
         else:
             d[n][0] += 1     # 字典中存在当前整数，次数加1
     except:
@@ -4482,7 +4481,7 @@ import numpy as np
 a = np.array((1, 2, 3))  # a是[1 2 3]
 b = np.append(a, 10)    # a不变
 print(b)    # >>[ 1  2  3 10]
-print(np.append(a, [10, 20]))   # >>[ 1  2  3 10 20]
+print(np.append(a, [10, 20]))   # >>[1 2 3 10 20]
 c = np.zeros((2, 3,), dtype=int)    # c是2行3列全为0的数组
 print(np.append(a, c))  # >>[1 2 3 0 0 0 0 0 0]
 print(np.concatenate((a, [10, 20], a)))
@@ -6889,5 +6888,5 @@ def main():
     gWin.mainloop()
 
 
-main()
+main() 
 ```

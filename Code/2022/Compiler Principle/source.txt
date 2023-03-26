@@ -1,1 +1,0 @@
-int$g;$g=469;$g=100+($g+53)*911*$g*$g;while($g*707<=$g*591)dobegin$g=$g*791;$g=$g+9;end; if($g*7<=$g)then$g=$g*9;else$g=$g*85;
