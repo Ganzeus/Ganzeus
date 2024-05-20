@@ -160,7 +160,24 @@ print(square_matrix_extension.square_matrix(a))
 
 
 
-## Triton debugger
+## Triton
 
-`@triton.hit(interpret=True)`
 
+
+# Lecture 2 Recap Ch. 1-3 from the PMPP book
+
+
+
+
+
+# Lecture 14 Practitioners Guide to Triton
+
+> 详见jupypter notebook
+
+##### 总结
+
+并行编程只需要考虑两部分：
+
+1. 如何划分块
+2. 每一块进行的操作都是一模一样的，只需要编写每一块执行的操作即可。
+   块内操作可以看成是顺序编程，唯一区别就是块内去要利用mask进行边界处理。
