@@ -1,4 +1,4 @@
-压榨Github服务器，备份写过的代码以及各种笔记等
+notes & code backup
 
 
 
