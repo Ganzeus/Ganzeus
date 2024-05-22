@@ -1,10 +1,6 @@
-cuda-mode lectures 学习笔记
+## Lecture1 Profiling and Integrating CUDA kernels in PyTorch
 
-----
-
-# Lecture1 Profiling and Integrating CUDA kernels in PyTorch
-
-## 三种Profile方法
+### 三种Profile方法
 
 #### cuda.Event测量执行时间
 
@@ -103,7 +99,9 @@ with torch.profiler.profile(
 
 
 
-## How to run cuda kernels in PyTorch
+
+
+### 在PyTorch中运行cuda等其他语言代码
 
 #### load_inline
 
@@ -160,17 +158,22 @@ print(square_matrix_extension.square_matrix(a))
 
 
 
-## Triton
-
-
-
-# Lecture 2 Recap Ch. 1-3 from the PMPP book
 
 
 
 
+## Lecture 3 Getting started with CUDA
 
-# Lecture 14 Practitioners Guide to Triton
+1. 为什么cuda不直接细分成threads，而是要先分成block再分threads?
+   答：A thread block is a group of threads that can cooperate among themselves through ==shared memory==and synchronization. ==All threads in a block are executed on the same SM==. This means they can share resources such as shared memory and can synchronize their execution with each other.
+
+
+
+
+
+
+
+## Lecture 14 Practitioners Guide to Triton
 
 > 详见jupypter notebook
 
