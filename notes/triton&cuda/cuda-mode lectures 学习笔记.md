@@ -2,13 +2,14 @@
 
 ### 三种Profile方法
 
+> 为什么不能用time模块测量执行时间？
+> 答：在 CUDA 中，GPU 的计算和CPU的计算可以同时进行，因此它们是异步的。而使用 time 模块来测量 CUDA 函数的执行时间并不准确，因为它无法考虑到 GPU 计算的异步性。
+
 #### cuda.Event测量执行时间
 
 ```python
 def time_pytorch_function(func, input):
     # CUDA IS ASYNC so can't use python time module
-    # 在 CUDA 中，GPU 的计算和CPU的计算可以同时进行，因此它们是异步的
-    # 而使用 time 模块来测量 CUDA 函数的执行时间并不准确，因为它无法考虑到 GPU 计算的异步性
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
 
@@ -162,12 +163,11 @@ print(square_matrix_extension.square_matrix(a))
 
 
 
-## Lecture 3 Getting started with CUDA
+## Lecture 3+5 Getting started with CUDA + Going Further with CUDA
 
 1. 为什么cuda不直接细分成threads，而是要先分成block再分threads?
    答：A thread block is a group of threads that can cooperate among themselves through ==shared memory==and synchronization. ==All threads in a block are executed on the same SM==. This means they can share resources such as shared memory and can synchronize their execution with each other.
-
-
+2. ==cuda代码就是c/c++==
 
 
 
@@ -177,10 +177,60 @@ print(square_matrix_extension.square_matrix(a))
 
 > 详见jupypter notebook
 
-##### 总结
+##### 并行编程要点
 
 并行编程只需要考虑两部分：
 
 1. 如何划分块
 2. 每一块进行的操作都是一模一样的，只需要编写每一块执行的操作即可。
    块内操作可以看成是顺序编程，唯一区别就是块内去要利用mask进行边界处理。
+
+
+
+##### Tiled matmul 与共享内存
+
++ tile就是将block进一步划分，分成更小的块（Block=一整面墙，tile=一块瓷砖）
++ 出发点：通过共享内存进行计算实现加速，但共享内存很小，不能存放整个thread甚至block，因此要进一步分成更小的块
++ ==GPU中的共享内存相当于CPU中的cache==
+
+## Lecture 11 Sparsity
+
+### Lottery Ticket Hypothesis
+
++ 网络在训练之前prune吊90%~95%的节点，训练后精度依然能接近全节点网络，甚至精度更高。
+
+步骤：
+
+1. 随机初始化全网络
+2. 简单训练几轮
+3. prune掉一部分不重要的节点
+4. 将剩下的节点之间的权重回到初始化的值
+5. 返回第二步进行下一轮剪枝，直到仅剩下10%左右的节点
+
+
+
+### Difference between inference and training
+
+#### Training 
+
++ Only compute benefit, slight memory penalty(9/8)
+  + 在训练过程中，主要的好处在于计算方面，这意味着操作被优化得更快。
+  + 内存使用略有增加，大约是9/8。这可能是因为需要存储额外的信息或中间结果。
++ Sparsification happens at runtime
+  + 将矩阵变为稀疏矩阵（减少非零元素的数量）的过程是在运行时进行的。
++ need both W and W^T
+  + 训练过程中需要同时使用权重矩阵 \( W \) 及其转置 \( W^T \)。
++ Needs contiguous output for distributed collective
+  + 输出需要是连续的，以便进行分布式集合操作（例如在多设备或多节点上进行计算时）。
+
+#### Inference
+
++ Compute + memory speedup
+  + 在推理过程中，计算和内存的使用都会得到提升，即计算速度更快，内存使用更少。
++ Sparsification happens offline
+  + 稀疏化过程是在离线完成的，即在推理之前完成，而不是在运行时进行。
++ Just W is sufficient
+  + 推理阶段只需要权重矩阵 \( W \)，不需要 \( W^T \)。
++ Can return a view and torch.compile away subsequent transposition
+  + 可以返回一个矩阵的视图，并使用 `torch.compile` 优化后续可能需要的转置操作，从而进一步提升性能。
+
