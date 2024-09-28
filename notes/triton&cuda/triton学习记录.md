@@ -6,9 +6,9 @@
 
 + triton不需要考虑shared memory，而cuda需要手动实现
 
-#### 什么是program
+#### program == block
 
-> Note on jargon: In triton lingo, each kernel (which processes a block) is called a "program". I.e., our example above runs 2 programs. Therefore, "block_id" is often called "pid" (short for "program id"), but it's the same.
+> Note on jargon: In triton lingo, each kernel (which processes a block) is called a "program". Therefore, "block_id" is often called "pid" (short for "program id"), but it's the same.
 
 + triton中的program就是cuda中的block
 + cuda把计算分成block和thread，而triton只分为block。
@@ -128,7 +128,7 @@ grid = lambda meta: (triton.cdiv(m, meta['bm']),  triton.cdiv(n, meta['bn']))
 
 ![image-20240923234640128](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240923234640128.png)
 
-### Conv2d
+
 
 
 
