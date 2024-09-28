@@ -151,7 +151,9 @@ curl -O http://example.com/file.zip
     ```
   
 - `curl` 常用选项：
+  
   - `-o filename`：将下载的文件保存为指定的文件名。例如：
+    
     ```sh
     curl -o myfile.zip http://example.com/file.zip
     ```
@@ -159,3 +161,18 @@ curl -O http://example.com/file.zip
     ```sh
     curl -L -O http://example.com/file.zip
     ```
+
+
+
+
+
+
+
+
+
+求助：
+
+搞不出什么成果
+
+一直等开源，搞清楚别人的kernel怎么实现的，感觉自己一直跟着别人屁股后面，
+
