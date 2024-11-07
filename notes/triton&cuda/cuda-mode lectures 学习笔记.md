@@ -15,7 +15,7 @@ def time_pytorch_function(func, input):
 
     # Warmup
     for _ in range(5):	# 5次预热迭代，以确保GPU处于稳定状态。
-2        func(input)
+        func(input)
 
     start.record()
     func(input)
@@ -44,9 +44,9 @@ print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
 ##### 默认版
 
 ```python
-## Default way to use profiler
+# Default way to use profiler
 with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
-    for _ in range(10):z`
+    for _ in range(10):
         a = torch.square(torch.randn(10000, 10000).cuda())
 prof.export_chrome_trace("trace.json")
 ```
@@ -197,7 +197,7 @@ print(square_matrix_extension.square_matrix(a))
 
 ### Lottery Ticket Hypothesis
 
-+ 网络在训练之前prune吊90%~95%的节点，训练后精度依然能接近全节点网络，甚至精度更高。
++ 网络在训练之前prune掉90%~95%的节点，训练后精度依然能接近全节点网络，甚至精度更高。
 
 步骤：
 

@@ -8,9 +8,11 @@
 
 
 
+# CUDA 语法
 
 
-# PART I Fundamental Concepts
+
+
 
 ### CUDA API
 
@@ -129,7 +131,7 @@
 
 
 
-
+# 知识点
 
 ### Grid, Block and Thread
 
@@ -183,6 +185,17 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 ```
 
 + 每个向量划分成32个一维block，每个block有128 threads
+
+
+
+
+
+##### Tile
+
+> The term tile draws on the analogy that a large wall(i. e., the global memory data) can be covered by small tiles(i. e., subsets that can each fit into the shared memory).
+
++ tile就是将block进一步划分，分成更小的块（Block=一整面墙，tile=一块瓷砖）
++ 出发点：通过 ==共享内存==进行计算实现加速，但共享内存很小，不能存放整个thread甚至block，因此要进一步分成更小的块
 
 
 
@@ -244,6 +257,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 + 共享寄存器可以被所有线程访问，旨在不同线程之间的高效数据共享
 + 寄存器是线程私有的
++ 共享内存只能被一个block内的所有线程共享，但不能被多个block共享
 
 
 
@@ -253,50 +267,229 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 
 
-### Kernel Example
+### 稀疏矩阵运算
+
+稀疏矩阵运算核心就是将矩阵换了一个数据结构来存储，并没有什么特别高端的算法，**唯一要修改的就是读写内存的方式**，计算依然是普通的矩阵运算。
+
+出发点就是**注意到**矩阵很稀疏，所以要换一个节省空间的存储方式，而不是将矩阵修改为稀疏矩阵（学习之前的误解）。
+
+书里例举了四种稀疏矩阵存储方式，和对应的矩阵与向量相乘的kernel，但并没有构造稀疏矩阵的代码，所有的kernel都是默认矩阵已经按所例举的方式存好了。
+
+#### COO format
+
+![image-20241031222017364](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031222017364.png)
+
++ 就是直接存放下标+元素值
++ 下标不是用元组存放（当然C++没有元组），而是直接用两个数组，分别存行和列
+
+
+
+优点：
+
+1. 方便增删元素
+2. 可以用任何顺序遍历
+3. no control divergence(所有线程负责的元素数量相同，同时开始和结束，除了边界线程)
+4. 对内存的访问是**聚合的**（==即相邻线程访问的元素在内存中也是相邻的==）
+
+缺点：
+
+1. 不能按行/列遍历，因为元素是无序的
+2. 需要原子操作，因为相邻线程可能会对同一个元素进行写入修改
+
+#### CSR format
+
+![image-20241031221923938](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031221923938.png)
+
++ rowPtrs数组元素个数为矩阵行数
++ 存放每行第一个元素在ColIdx数组中的位置
+
+
+
+优点：
+
+1. 可以按行遍历（第i行的元素范围是`rowPtrs[i]~rowPtrs[i+1]`
+2. 比COO更节省空间
+
+缺点：
+
+1. 不方便增删元素（元素是严格按行顺序存储的）
+2. 有control divergence（每行的元素数量不固定，意味着不同线程会处理不同数量的元素）
+3. 内存访问不是聚合的（相邻线程访问的元素存在间隔）
+
+#### ELL format
+
+![image-20241031223513658](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031223513658.png)
+
++ ELL就是在CSR基础上，将colIdx和value数组填充并转换成矩阵，列数为最长那一行的元素个数
++ ==实际上就是在原矩阵上删掉几列，直到某一行没有0元素为止==
++ 最后将转换后的矩阵按列优先展开成一维数组
++ 转换后矩阵元素的列下标回合原矩阵有区别，**因此要设置colIdx数组保存元素在原矩阵中的列坐标**
++ 相邻元素不在同一行，按照第一行、第二行、第三行...顺序依次循环
+
+
+
+优点：
+
+1. 可以按行遍历（每行元素间隔为行数，只需以行数为步长跳跃即可），但不能按行遍历
+2. 可以算出任意元素的行列下标
+3. 对内存访问是聚合的——相邻线程访问相邻元素。（因为相邻元素在在不同行，而每个线程负责一个行）
+4. 增加元素比CSR方便，只需要与填充元素替换即可（但不能在最长的那一行添加）
+
+
+
+缺点：
+
+1. 节省空间不够，因为需要填充元素，并且如果有某一行元素特别多，那么填充元素就会非常浪费
+2. control divergence（每行的元素个数不一定相同）
+
+#### ELL-COO format
+
++ 即ELL+COO两种存储方式混合
++ 防止由于某行元素过多导致的填充浪费
+
+![image-20241031234520174](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031234520174.png)
+
++ 将元素多的若干行中的多余元素用COO表示
+
+
+
+优点：
+
+1. 比ELL节省空间
+2. 添加元素很方便，因为可以直接在COO部分添加
+3. 对内存访问是聚合的（因为ELL和COO都是聚合的）
+
+缺点：
+
+1. 无法按行/列遍历，因为元素多的若干行的部分元素在COO中
+
+
+
+#### JDS format
+
+![image-20241031235147442](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031235147442.png)
+
++ 就是不填充元素的ELL，只不过要先对行的长度进行排序
++ 由于行顺序乱了，因此需要一个row数组保存行下标顺序
++ 由于每列的元素个数不同，因此还需要一个iterPtr数组保存colIdx每列的元素个数，用于指明每层循环的起始位置
+
+
+
+优点：
+
+1. 比ELL节省空间，因为不需要填充元素
+
+缺点：
+
+1. 添加元素非常不方便，因为要对行重新排序
+
+# Kernel Example
 
 #### Vector Addition
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240524174617453.png" alt="image-20240524174617453" style="zoom: 50%;" /> 
+```c++
+// compute vector sum C = A + B
+// each thread peforms one pair-wise addition
+__global__ void vecAddKernel(float *A, float *B, float *C, int n) {
+  int i = threadIdx.x + blockDim.x * blockIdx.x;
+  if (i < n) {
+    C[i] = A[i] + B[i];
+  }
+}
+
+void vecAdd(float *A, float *B, float *C, int n) {
+  float *A_d, *B_d, *C_d;
+  size_t size = n * sizeof(float);
+
+  cudaMalloc((void **)&A_d, size);
+  cudaMalloc((void **)&B_d, size);
+  cudaMalloc((void **)&C_d, size);
+
+  cudaMemcpy(A_d, A, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(B_d, B, size, cudaMemcpyHostToDevice);
+
+  const unsigned int numThreads = 256;
+  unsigned int numBlocks = cdiv(n, numThreads);
+
+  vecAddKernel<<<numBlocks, numThreads>>>(A_d, B_d, C_d, n);
+  gpuErrchk(cudaPeekAtLastError());
+  gpuErrchk(cudaDeviceSynchronize());
+
+  cudaMemcpy(C, C_d, size, cudaMemcpyDeviceToHost);
+
+  cudaFree(A_d);
+  cudaFree(B_d);
+  cudaFree(C_d);
+} 
+```
 
 
 
 #### Image Blur
 
-![image-20240606180613907](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240606180613907.png)
+```c++
+__global__
+void mean_filter_kernel(unsigned char* output, unsigned char* input, int width, int height, int radius) {
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int channel = threadIdx.z;
+
+    int baseOffset = channel * height * width;
+    if (col < width && row < height) {
+
+        int pixVal = 0;
+        int pixels = 0;
+
+        for (int blurRow=-radius; blurRow <= radius; blurRow += 1) {
+            for (int blurCol=-radius; blurCol <= radius; blurCol += 1) {
+                int curRow = row + blurRow;
+                int curCol = col + blurCol;
+                if (curRow >= 0 && curRow < height && curCol >=0 && curCol < width) {
+                    pixVal += input[baseOffset + curRow * width + curCol];
+                    pixels += 1;
+                }
+            }
+        }
+
+        output[baseOffset + row * width + col] = (unsigned char)(pixVal / pixels);
+    }
+}
 
 
-
-#### Tiled Matmul
-
-##### Tile
-
-> The term tile draws on the analogy that a large wall(i. e., the global memory data) can be covered by small tiles(i. e., subsets that can each fit into the shared memory).
-
-+ tile就是将block进一步划分，分成更小的块（Block=一整面墙，tile=一块瓷砖）
-+ 出发点：通过 ==共享内存==进行计算实现加速，但共享内存很小，不能存放整个thread甚至block，因此要进一步分成更小的块
+// helper function for ceiling unsigned integer division
+inline unsigned int cdiv(unsigned int a, unsigned int b) {
+  return (a + b - 1) / b;
+}
 
 
+torch::Tensor mean_filter(torch::Tensor image, int radius) {
+    assert(image.device().type() == torch::kCUDA);
+    assert(image.dtype() == torch::kByte);
+    assert(radius > 0);
 
-# PART II Parallel Patterns
+    const auto channels = image.size(0);
+    const auto height = image.size(1);
+    const auto width = image.size(2);
 
+    auto result = torch::empty_like(image);
 
+    dim3 threads_per_block(16, 16, channels);
+    dim3 number_of_blocks(
+        cdiv(width, threads_per_block.x),
+        cdiv(height, threads_per_block.y)
+    );
 
+    mean_filter_kernel<<<number_of_blocks, threads_per_block, 0, torch::cuda::getCurrentCUDAStream()>>>(
+        result.data_ptr<unsigned char>(),
+        image.data_ptr<unsigned char>(),
+        width,
+        height,
+        radius
+    );
 
+    // check CUDA error status (calls cudaGetLastError())
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
 
-
-
-
-
-# PART III Advanced Parallel Patterns & Applications
-
-
-
-
-
-
-
-
-
-# PART IV Advanced Practices
-
+    return result;
+}
+```

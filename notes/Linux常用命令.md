@@ -170,9 +170,13 @@ curl -O http://example.com/file.zip
 
 
 
-求助：
+#### 查看服务器配置
 
-搞不出什么成果
+##### cpu
 
-一直等开源，搞清楚别人的kernel怎么实现的，感觉自己一直跟着别人屁股后面，
+```bash
+lscpu
+```
+
+
 
