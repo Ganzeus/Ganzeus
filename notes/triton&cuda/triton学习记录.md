@@ -1,6 +1,6 @@
 ## 笔记
 
-
+[A practitioner's guide to Triton](https://github.com/Ganzeus/Ganzeus/blob/master/notes/triton%26cuda/A guide to Triton.ipynb)
 
 ### 并行编程思想
 
