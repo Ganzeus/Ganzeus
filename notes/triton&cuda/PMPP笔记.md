@@ -1,12 +1,10 @@
 # 封面
 
-![image-20241112221305162](./../../img/typora-user-images/image-20241112221305162.png)
-
-![image-20240514174423028](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240514174423028.png)
+![image-20241112221500523](./../../img/typora-user-images/image-20241112221500523.png)
 
 # 章节结构
 
-![image-20240514174332817](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240514174332817.png)
+![image-20241112221522133](./../../img/typora-user-images/image-20241112221522133.png)
 
 
 
@@ -81,7 +79,7 @@
 
 #### 函数声明
 
-![image-20240524172656090](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240524172656090.png)
+![image-20241112221544534](./../../img/typora-user-images/image-20241112221544534.png)
 
 + `__host__`：就是普通的C函数，在CPU上运行，只能被CPU调用。
   ==没有关键字的函数默认为host function==
@@ -93,7 +91,7 @@
 
 #### 变量声明
 
-![image-20240706223539028](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240706223539028.png)
+![image-20241112221554662](./../../img/typora-user-images/image-20241112221554662.png)
 
 
 
@@ -152,9 +150,7 @@
 + block是一维时，只有x字段有用，`blockDim.x`就表示一个block有多少threads
 + 可见block最多分三维
 
-
-
-![image-20240524163114267](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240524163114267.png)
+![image-20241112221605987](./../../img/typora-user-images/image-20241112221605987.png)
 
 
 
@@ -205,7 +201,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 #### SM（流多处理器Streaming Multiprocessor)
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240617135653619.png" alt="image-20240617135653619" style="zoom:50%;" />
+![image-20241112221620263](./../../img/typora-user-images/image-20241112221620263.png)
 
 + 一个SM（Streaming Multiprocessor）可以分配多个Block
 
@@ -213,14 +209,14 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 #### Warps
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240618155256357.png" alt="image-20240618155256357" style="zoom:50%;" /> 
+![image-20241112221645814](./../../img/typora-user-images/image-20241112221645814.png) 
 
 + 1 warp = 32 threads
 + 如果thread是二/三维排列，那么flatten成一维后，每32个thread属于一个warp
 + **一个warp中的所有线程同时执行某一条指令**，称为'single instruction, multiple-thread'
   即warp是取指执行的最小单位
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240618182321060.png" alt="image-20240618182321060" style="zoom:50%;" /> 
+![image-20241112221707701](./../../img/typora-user-images/image-20241112221707701.png) 
 
 + ==对于Pascal架构GPU：==一个warp中的线程不能同时执行多种指令。例如在if语句中，同一时刻只能执行一个分支
 + 从Volta架构开始，一个warp中的线程可以同时执行多个分支
@@ -233,7 +229,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 ##### Overview
 
-![image-20240706020046379](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240706020046379.png)
+![image-20241112221720211](./../../img/typora-user-images/image-20241112221720211.png)
 
 ##### CPU vs GPU 寄存器架构
 
@@ -255,7 +251,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 ##### 共享内存vs寄存器
 
-![image-20240706195446602](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240706195446602.png)
+![image-20241112221731667](./../../img/typora-user-images/image-20241112221731667.png)
 
 + 共享寄存器可以被所有线程访问，旨在不同线程之间的高效数据共享
 + 寄存器是线程私有的
@@ -265,7 +261,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 ### Performance Considerations
 
-![image-20240814150650489](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240814150650489.png)
+![image-20241112221748691](./../../img/typora-user-images/image-20241112221748691.png)
 
 
 
@@ -279,7 +275,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 #### COO format
 
-![image-20241031222017364](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031222017364.png)
+![image-20241112221802362](./../../img/typora-user-images/image-20241112221802362.png)
 
 + 就是直接存放下标+元素值
 + 下标不是用元组存放（当然C++没有元组），而是直接用两个数组，分别存行和列
@@ -300,7 +296,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 #### CSR format
 
-![image-20241031221923938](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031221923938.png)
+![image-20241112221811452](./../../img/typora-user-images/image-20241112221811452.png)
 
 + rowPtrs数组元素个数为矩阵行数
 + 存放每行第一个元素在ColIdx数组中的位置
@@ -320,7 +316,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 #### ELL format
 
-![image-20241031223513658](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031223513658.png)
+![image-20241112221820623](./../../img/typora-user-images/image-20241112221820623.png)
 
 + ELL就是在CSR基础上，将colIdx和value数组填充并转换成矩阵，列数为最长那一行的元素个数
 + ==实际上就是在原矩阵上删掉几列，直到某一行没有0元素为止==
@@ -349,7 +345,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 + 即ELL+COO两种存储方式混合
 + 防止由于某行元素过多导致的填充浪费
 
-![image-20241031234520174](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031234520174.png)
+![image-20241112221829766](./../../img/typora-user-images/image-20241112221829766.png)
 
 + 将元素多的若干行中的多余元素用COO表示
 
@@ -369,7 +365,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 #### JDS format
 
-![image-20241031235147442](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241031235147442.png)
+![image-20241112221837727](./../../img/typora-user-images/image-20241112221837727.png)
 
 + 就是不填充元素的ELL，只不过要先对行的长度进行排序
 + 由于行顺序乱了，因此需要一个row数组保存行下标顺序

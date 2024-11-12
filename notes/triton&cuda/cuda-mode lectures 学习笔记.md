@@ -96,7 +96,7 @@ with torch.profiler.profile(
 + `schedule` 参数定义了分析器的执行计划，包括等待时间、预热次数、活动次数和重复次数
 + `on_trace_ready` 参数指定了当分析器准备好输出跟踪数据时要执行的操作。在这里，你将跟踪数据输出到 TensorBoard 日志文件
 
-![image-20240513171316277](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240513171316277.png)
+![image-20241112222135791](./../../img/typora-user-images/image-20241112222135791.png)
 
 
 

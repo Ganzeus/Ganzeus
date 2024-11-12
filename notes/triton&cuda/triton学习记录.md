@@ -177,7 +177,7 @@ grid = lambda meta: (triton.cdiv(m, meta['bm']),  triton.cdiv(n, meta['bn']))
 
 #### 图解
 
-![image-20240909205254884](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240909205254884.png)
+![image-20241112221926729](./../../img/typora-user-images/image-20241112221926729.png)
 
 #### 代码
 
@@ -224,7 +224,7 @@ def add_kernel(a_ptr, b_ptr, c_ptr, n, BLOCK_SIZE: tl.constexpr):
 
 #### 图解
 
-![image-20240909205314939](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240909205314939.png)
+![image-20241112221948302](./../../img/typora-user-images/image-20241112221948302.png)
 
 #### 代码
 
@@ -279,7 +279,7 @@ def matrix_add_kernel(a_ptr, b_ptr, c_ptr, m, n, bs0: tl.constexpr, bs1: tl.cons
 
 #### 图解
 
-![image-20240923234331822](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20240923234331822.png)
+![image-20241112222013725](./../../img/typora-user-images/image-20241112222013725.png)
 
 
 #### 代码
@@ -358,13 +358,13 @@ def matmul_kernel(
 
 #### 优化：Grouped ordering
 
-![image-20241105192034176](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241105192034176.png)
+![image-20241112222038130](./../../img/typora-user-images/image-20241112222038130.png)
 
 + **图中的每个格子都是一个block，而不是矩阵中的一个元素**
 + 默认的block读取顺序为第一行，即行优先依次读取
 + 将block读取顺序修改为第二行的样子，就可以增加L2 cache的命中率
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241105191834445.png" alt="image-20241105191834445" style="zoom:80%;" />
+![image-20241112222044220](./../../img/typora-user-images/image-20241112222044220.png)
 
 + 核心：修改block下标，从而改变读取block的顺序（==**不是修改矩阵元素的下标！！！**==）
 
@@ -495,7 +495,7 @@ def grouped_matmul_kernel(
 
 #### 图解
 
-![image-20241022192339960](C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20241022192339960.png)
+![image-20241112222101973](./../../img/typora-user-images/image-20241112222101973.png)
 
 #### 代码
 
