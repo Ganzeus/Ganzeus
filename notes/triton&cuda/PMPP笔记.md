@@ -133,7 +133,7 @@
 
 # 知识点
 
-### Grid, Block and Thread
+## Grid, Block and Thread
 
 > When a program’s host code calls a kernel, the CUDA runtime system launches a grid of threads that are organized into a two-level hierarchy. Each grid is organized as an array of thread blocks, which we will refer to as blocks for brevity. All blocks of a grid are of the same size; each block can contain up to 1024 threads on current systems.
 
@@ -186,9 +186,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 
 
-
-
-##### Tile
+### Tile
 
 > The term tile draws on the analogy that a large wall(i. e., the global memory data) can be covered by small tiles(i. e., subsets that can each fit into the shared memory).
 
@@ -197,7 +195,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 
 
-### GPU架构
+## GPU架构
 
 #### SM（流多处理器Streaming Multiprocessor)
 
@@ -259,13 +257,15 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 
 
-### Performance Considerations
+## Performance Considerations
 
 ![image-20241112221748691](./../../img/typora-user-images/image-20241112221748691.png)
 
 
 
-### 稀疏矩阵运算
+
+
+## 稀疏矩阵运算
 
 稀疏矩阵运算核心就是将矩阵换了一个数据结构来存储，并没有什么特别高端的算法，**唯一要修改的就是读写内存的方式**，计算依然是普通的矩阵运算。
 
@@ -273,7 +273,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 书里例举了四种稀疏矩阵存储方式，和对应的矩阵与向量相乘的kernel，但并没有构造稀疏矩阵的代码，所有的kernel都是默认矩阵已经按所例举的方式存好了。
 
-#### COO format
+### COO format
 
 ![image-20241112221802362](./../../img/typora-user-images/image-20241112221802362.png)
 
@@ -294,7 +294,9 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 1. 不能按行/列遍历，因为元素是无序的
 2. 需要原子操作，因为相邻线程可能会对同一个元素进行写入修改
 
-#### CSR format
+
+
+### CSR format
 
 ![image-20241112221811452](./../../img/typora-user-images/image-20241112221811452.png)
 
@@ -314,7 +316,9 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 2. 有control divergence（每行的元素数量不固定，意味着不同线程会处理不同数量的元素）
 3. 内存访问不是聚合的（相邻线程访问的元素存在间隔）
 
-#### ELL format
+
+
+### ELL format
 
 ![image-20241112221820623](./../../img/typora-user-images/image-20241112221820623.png)
 
@@ -340,7 +344,9 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 1. 节省空间不够，因为需要填充元素，并且如果有某一行元素特别多，那么填充元素就会非常浪费
 2. control divergence（每行的元素个数不一定相同）
 
-#### ELL-COO format
+
+
+### ELL-COO format
 
 + 即ELL+COO两种存储方式混合
 + 防止由于某行元素过多导致的填充浪费
@@ -363,7 +369,7 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 
 
-#### JDS format
+### JDS format
 
 ![image-20241112221837727](./../../img/typora-user-images/image-20241112221837727.png)
 
@@ -380,6 +386,73 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 缺点：
 
 1. 添加元素非常不方便，因为要对行重新排序
+
+
+
+
+
+## 卷积神经网络
+
+### Inference(Forward)
+
+![image-20241126152426218](./../../img/typora-user-images/image-20241126152426218.png)
+
+#### C语言实现
+
+```C++
+void convLayer_forward(int Cout, int Cin, int H, int W, int K, float* X, float* F, float* Y){
+    // 输入为[Cin, H, W]
+    // 一个filter size为[Cin, K, K], 共有Cout层filter -> F[Cout, Cin, K, K]
+    // 输出feature map为[Cout, H-K+1, W-K+1](无padding)
+    int H_out = H - K + 1;
+    int W_out = W - K + 1;
+    for(int c = 0; c < Cout; c++) 			// 每次计算一层输出feature map
+        for(int h = 0; h < H_out; h++)			
+            for(int w = 0; w < W_out; w++) {	// 对于feature map的每个元素
+                Y[c, h, w] = 0;					// 初始化
+                for(int i = 0; i < Cin; i++)	// filter的每个channel对应输入的每个channel
+                    for(int j = 0; j < K; j++)
+                        for(int k = 0; k < K; k++)	// 与filter的每个元素相乘
+                            Y[c, h, w] += X[i, h+j, w+k] * F[c, i, j, k];	// 累加
+            }
+}
+```
+
+
+
+
+
+### Backward
+
+![image-20241126152408769](./../../img/typora-user-images/image-20241126152408769.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Kernel Example
 
