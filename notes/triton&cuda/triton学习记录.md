@@ -1,6 +1,10 @@
-## 笔记
-
 [A practitioner's guide to Triton](https://github.com/Ganzeus/Ganzeus/blob/master/notes/triton%26cuda/A guide to Triton.ipynb)
+
+[Tutorials — Triton documentation](https://triton-lang.org/main/getting-started/tutorials/index.html)
+
+[Triton-Puzzles](https://github.com/Ganzeus/Ganzeus/blob/master/Triton-Puzzles.ipynb)
+
+## 笔记
 
 ### 并行编程思想
 
@@ -34,8 +38,9 @@
 
 #### grid & block
 
-+ grid就是一个tensor
-+ 用来指定block(program)的分块维度，**每个维度分成多少块**
++ grid是一个元组
++ 用来指定block(program)的分块结构，**每个维度分成多少块**
++ 例如grid = (4, 5)表示按四行五列的二维形式分为20个block，每个block负责程序的一部分数据
 
 **grid和block本质**
 
@@ -224,6 +229,8 @@ def add_kernel(a_ptr, b_ptr, c_ptr, n, BLOCK_SIZE: tl.constexpr):
 
 #### 图解
 
+> Tensor在底层都是顺序存储，因此下标是[0, 1, 2, ...]而不是二维下标
+
 ![image-20241112221948302](./../../img/typora-user-images/image-20241112221948302.png)
 
 #### 代码
@@ -279,8 +286,32 @@ def matrix_add_kernel(a_ptr, b_ptr, c_ptr, m, n, bs0: tl.constexpr, bs1: tl.cons
 
 #### 图解
 
-![image-20241112222013725](./../../img/typora-user-images/image-20241112222013725.png)
+> Tensor在底层都是顺序存储，因此下标是[0, 1, 2, ...]而不是二维下标
 
+![image-20241127204436892](./../../img/typora-user-images/image-20241127204436892.png)
+
+#### 为什么计算mask不需要乘stride?
+
+​	在Triton kernel中，**mask的计算与stride无关的原因**是因为`mask`只用于检查当前线程需要访问的索引是否在矩阵的有效范围内，而不是去计算实际的内存地址。————**mask中只需要存放行号和列号，不需要存一维序号**
+
+​	stride 是用来计算线性存储下实际的内存地址的，比如二维矩阵在一维内存中的布局，需要通过 `row * stride_row + col * stride_col` 来定位元素的具体内存地址,例如计算**`off_A` 和 `off_B`** 时需要用 stride，因为它们需要将矩阵的s逻辑索引（行号、列号）映射到物理内存地址。而 `mask` 的目的是判断某个线程的计算任务是否越界，例如当前线程对应的矩阵行号和列号是否在矩阵的有效维度范围内。这里的索引检查完全基于逻辑坐标（矩阵的行和列号），而不需要映射到内存地址。
+
+具体来看：
+
+- **`off_m[:, None]` 和 `off_k[None, :]`** 是当前线程负责的矩阵块的行号和列号索引。
+- **`off_k[None, :] < k` 和 `off_m[:, None] < m`** 是简单地判断这些行号和列号是否落在矩阵的有效范围 `[0, m)` 和 `[0, k)` 中。
+
+因此，mask 的计算只需要与矩阵的逻辑大小（`m, n, k`）相关，而与矩阵在内存中的布局(一维)无关。
+
+> Triton 的 `tl.load` 设计允许我们同时加载一个块（例如 `bm x bn` 的矩阵块）：
+>
+> - `tl.load` 的输入是二维的逻辑索引（如 `off_A` 和 `off_B`），以及一个同样是二维的 `mask`
+> - `mask` 在加载数据时，用来告诉 `tl.load` 哪些逻辑索引越界（会屏蔽掉这些元素，用 `other` 参数填充）
+
+**总结**
+
+- **mask的作用**：判断索引是否越界，只需要用逻辑索引进行对比，不需要stride。
+- **stride的作用**：计算内存地址，只有在真正加载或存储数据时才需要考虑。
 
 #### 代码
 
@@ -467,7 +498,7 @@ def grouped_matmul_kernel(
     acc = tl.zeros((bm, bn), dtype=tl.float32)
     for i in range(0, k, bk):       # 每层循环计算一个phase
         off_k = i + tl.arange(0, bk)
-    
+    ara
         # offs_A, offs_B都是下标矩阵， 表示当前线程内相乘的两个矩阵在原矩阵对应的下标
         off_A = off_k[None, :] * stride_ak + off_m[:, None] * stride_am
         mask_A = (off_k[None, :] < k) & (off_m[:, None] < m)
@@ -488,6 +519,10 @@ def grouped_matmul_kernel(
     mask_C = (off_n[None, :] < m) & (off_m[:, None] < n)
     tl.store(c_ptr + off_C, acc, mask=mask_C)
 ```
+
+
+
+
 
 
 
@@ -543,5 +578,167 @@ def transpose_kernel(
 
 
 
-### Conv2d
+### Conv2d(Naive)
 
+#### 代码
+
+> from [cmeraki/vit.triton: VIT inference in triton because, why not?](https://github.com/cmeraki/vit.triton)
+
+```python
+def conv2d_triton(
+    input: torch.Tensor,		# (batch_size, Cin, h, w)
+    kernel: torch.Tensor,		# (Cout, Cin, kernel_height, kernel_width)
+    bias: torch.Tensor			# (Cout, 1)
+) -> torch.Tensor:
+    assert input.is_cuda and kernel.is_cuda, 'Input or kernel is not on GPU'
+    assert len(input.shape) == 4, f'Input needs to be 4 dimensional, provided: {input.shape}'
+    assert len(kernel.shape) == 4, f'Kernel size needs to be 4 dimensional, provided: {kernel.shape}'
+    assert bias.shape[0] == kernel.shape[0], f'Bias dimension should be same as the kernel 1st dimension'
+
+    batch_size, channels, height, width = input.shape
+    num_kernels, kernel_depth, kernel_height, kernel_width = kernel.shape
+
+    assert height%kernel_height == 0 and width%kernel_width == 0, f"Input height and width should be divisible by the kernel height and width"
+    assert channels == kernel_depth, f"Kernel channel depth ({kernel_depth}) and input channel depth ({channels}) should be same"
+
+    output = torch.empty((batch_size, num_kernels, height//kernel_height, width//kernel_width), device=device, dtype=dtype)			# kernel步长为kernel边长(即每次计算不会重叠)
+
+    BLOCK_SIZE_ROW = triton.next_power_of_2(kernel_height)
+    BLOCK_SIZE_COL = triton.next_power_of_2(kernel_width)
+    
+    # 每个kernel计算输出矩阵的一行（input所有channel一起计算）
+    grid = (batch_size, num_kernels, height//kernel_height)
+
+    conv2d_kernel[grid](
+        input_ptr=input,
+        input_batch_stride=input.stride(0),			# Cin * h * w
+        input_channel_stride=input.stride(1),		# h * w
+        input_row_stride=input.stride(2),			# w
+        input_col_stride=input.stride(3),			# 1
+        height=height,
+        width=width,
+        channels=channels,
+        kernel_ptr=kernel,
+        kernel_height=kernel_height,
+        kernel_width=kernel_width,
+        kernel_dim_stride=kernel.stride(0),			# Cin(kernel_depth) * kernel_height * kernel_width
+        kernel_channel_stride=kernel.stride(1),		# kernel_height * kernel_width
+        kernel_row_stride=kernel.stride(2),			# kernel_width
+        kernel_col_stride=kernel.stride(3),			# 1
+        bias_ptr=bias,
+        output_ptr=output,
+        output_width=width//kernel_width,
+        output_batch_stride=output.stride(0),		# Cout * Hout * Wout
+        output_channel_stride=output.stride(1),		# Hout * Wout
+        output_row_stride=output.stride(2),			# Wout
+        output_col_stride=output.stride(3),			# 1
+        BLOCK_SIZE_ROW=BLOCK_SIZE_ROW,
+        BLOCK_SIZE_COL=BLOCK_SIZE_COL,
+    )
+
+    return output
+
+@triton.jit
+def conv2d_kernel(
+    input_ptr,
+    input_batch_stride,		
+    input_channel_stride,	
+    input_row_stride,		
+    input_col_stride,		
+    height,
+    width,
+    channels,
+    kernel_ptr,
+    kernel_height,
+    kernel_width,
+    kernel_dim_stride,		
+    kernel_channel_stride,	
+    kernel_row_stride,		
+    kernel_col_stride,		
+    bias_ptr,
+    output_ptr,
+    output_width,
+    output_batch_stride,
+    output_channel_stride,
+    output_row_stride,
+    output_col_stride,
+    BLOCK_SIZE_ROW: tl.constexpr,
+    BLOCK_SIZE_COL: tl.constexpr
+):
+    batch_idx = tl.program_id(0)
+    kernel_idx = tl.program_id(1)	# 相当于输出channel的序号（一个kernel对应一个output channel)
+    row_idx = tl.program_id(2)		
+
+    # Bias offset and data
+    bias_offset = kernel_idx
+    bias = tl.load(bias_ptr + bias_offset)
+
+    # Input data offsets
+    batch_offset = batch_idx*input_batch_stride		# 当前batch的起始序号
+
+    # Output data offsets
+    output_batch_offset = batch_idx*output_batch_stride			# 当前batch的起始序号
+    output_channel_offset = kernel_idx*output_channel_stride	# 当前channel的起始序号
+    output_row_offset = row_idx*output_row_stride				# 当前行的起始序号 
+
+    # 计算Kernel offsets
+    kernel_row_offset = tl.arange(0, BLOCK_SIZE_ROW)
+    kernel_row_mask = kernel_row_offset[:, None] < kernel_height
+    kernel_row_offset = kernel_row_offset[:, None]*kernel_row_stride
+    kernel_col_offset = tl.arange(0, BLOCK_SIZE_COL)
+    kernel_col_mask = kernel_col_offset[None, :] < kernel_width
+    kernel_col_offset = kernel_col_offset[None, :]*kernel_col_stride
+    
+    kernel_mask = kernel_row_mask & kernel_col_mask
+
+    
+    for col_idx in range(output_width):		# 按列循环(即每次计算一个元素)
+        elem = 0.0
+		
+        # 计算input offset
+        input_row_offset = row_idx * kernel_height + tl.arange(0, BLOCK_SIZE_ROW)
+        input_row_mask = input_row_offset[:, None] < height
+        input_row_offset = input_row_offset[:, None]*input_row_stride
+
+        input_col_offset = col_idx * kernel_width + tl.arange(0, BLOCK_SIZE_ROW)
+        input_col_mask = input_col_offset[None, :] < width
+        input_col_offset = input_col_offset[None, :]*input_col_stride
+      	
+        input_mask = input_row_mask & input_col_mask
+
+        
+        for c in range(channels):		# Input 所有channel都要计算
+            input_offset = input_ptr + batch_offset + c*input_channel_stride + input_row_offset + input_col_offset
+            input_data = tl.load(input_offset, input_mask) # BLOCK_SIZE_ROW x BLOCK_SIZE_COL
+
+            # 每个input channel都有独自的kernel(2d)
+            kernel_offset = kernel_ptr + kernel_idx*kernel_dim_stride + c*kernel_channel_stride + kernel_row_offset + kernel_col_offset
+            kernel_data = tl.load(kernel_offset, kernel_mask)
+            dot_prdct = input_data * kernel_data
+            elem += tl.sum(dot_prdct)
+
+        # Store to output for the current channel
+        output_offset = output_ptr + output_batch_offset + output_channel_offset + output_row_offset + col_idx
+        tl.store(output_offset, elem + bias)	# elem和bias都是标量
+
+```
+
+
+
+
+
+#### 图解
+
+![image-20241127222827183](./../../img/typora-user-images/image-20241127222827183.png)
+
++ 如图可知, 此代码限定kernel边长为2的幂次，否则load Input时会出错
++ 以上图为例：kernel边长为3时，blocksize边长为4，kernel可以正确load，
+  但Input会读入4x4矩阵，与kernel size不一致，会导致计算出错
+
+
+
+### Conv2d->Gemm(Img2col)
+
+#### 原理
+
+![image-20241128153646492](./../../img/typora-user-images/image-20241128153646492.png)

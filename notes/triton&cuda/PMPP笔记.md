@@ -401,9 +401,9 @@ vecAddKernel<<<dimGrid, dimBlock>>>(...)
 
 ```C++
 void convLayer_forward(int Cout, int Cin, int H, int W, int K, float* X, float* F, float* Y){
-    // 输入为[Cin, H, W]
+    // 输入为X[Cin, H, W]
     // 一个filter size为[Cin, K, K], 共有Cout层filter -> F[Cout, Cin, K, K]
-    // 输出feature map为[Cout, H-K+1, W-K+1](无padding)
+    // 输出feature map为Y[Cout, H-K+1, W-K+1](无padding)
     int H_out = H - K + 1;
     int W_out = W - K + 1;
     for(int c = 0; c < Cout; c++) 			// 每次计算一层输出feature map
@@ -426,6 +426,11 @@ void convLayer_forward(int Cout, int Cin, int H, int W, int K, float* X, float* 
 
 ![image-20241126152408769](./../../img/typora-user-images/image-20241126152408769.png)
 
+#### 矩阵乘法求导
+
+$Y = WX \rarr \frac{\partial{Y}}{\partial{X}} = W^T, \frac{\partial{Y}}{\partial{W}} = X^T$
+
+推导:
 
 
 
@@ -437,6 +442,65 @@ void convLayer_forward(int Cout, int Cin, int H, int W, int K, float* X, float* 
 
 
 
+
+
+### Im2col
+
+#### 原理
+
+![image-20241209162555017](./../../img/typora-user-images/image-20241209162555017.png)
+
++ 把卷积核摊开成$(Cout, Cin*K*K)$
++ 把Input变为$(Cin*K*K, H_{out}*W_{out})$——**核心**
++ Input元素会增多，由原来的$(Cin, H, W)\rarr(Cin*K*K, H-K+1, W-K+1)$(stride=1)，
+  **当H、W特别大时, 近似于元素增加了K*K倍**($H-K+1 \approx H$)
+
+
+
+#### C语言实现
+
+```C++
+void unroll(int C, int H, int W, int K, float* X, float* X_unroll) {	// 计算X_unroll
+    int H_out = H-K+1;
+    int W_out = W-K+1;
+    for(int c = 0; c < C; c++){		// 对于每个channel——即每次循环计算（k*k, H_out*W_out)这一部分
+        int col_idx = 0;
+        for(int h = 0; h < H_out; h++)
+            for(int w = 0; w < W_out; w++){		// 每列起始坐标
+                // 将X(h, w)开始的K*K个元素存入X_unroll
+                for(int i = 0; i < K; i++)
+                    for(int j = 0; j < K; j++){
+                        int row_idx = i*K+j + c*K*K; // (当前部分的第几行+当前部分的起始行)
+                        X_unroll[row_idx][col_idx] = X[c][h+i][w+j]
+                    }
+                col_idx++;		//进入下一列
+            }
+    }
+}
+```
+
+
+
+#### Python实现
+
+```python
+def unroll(K, X):
+    C, H, W = X.shape
+    H_out, W_out = H-K+1, W-K+1
+    X_unroll = torch.zeros(C*K*K, H_out*W_out)
+    for c in range(C):      # 对于每个channel——每次计算（k*k, H_out*W_out)这一部分
+        col_idx = 0
+        for h in range(H_out):
+            for w in range(W_out):      # 每列起始坐标(h, w)
+                # 将X(h, w)开始的K*K个元素存入X_unroll
+                for i in range(K):
+                    for j in range(K):
+                        row_idx = i*K+j + c*K*K         # 当前部分的第几行+当前部分的起始行
+                        X_unroll[row_idx][col_idx] = X[c][h+i][w+j]
+                col_idx += 1            # 进入X_unroll的下一列
+
+    return X_unroll
+```
 
 
 
