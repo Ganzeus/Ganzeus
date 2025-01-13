@@ -234,3 +234,45 @@ print(square_matrix_extension.square_matrix(a))
 + Can return a view and torch.compile away subsequent transposition
   + 可以返回一个矩阵的视图，并使用 `torch.compile` 优化后续可能需要的转置操作，从而进一步提升性能。
 
+
+
+
+
+## Lecture 34: Low bit triton kernel
+
+![image-20241212181547132](./../../img/typora-user-images/image-20241212181547132.png)
+
+#### Challenges
+
++ **Multiple kernels are needed:**
+  + a kernel for large prefills(GEMM)
+  + a kernel for batched-decoding / short prefills(GEMM Split-K)
+  + a kernel for fast single user decoding(GEMV)——GEMV表示矩阵与vector相乘
++ **Same bitpacking across all kernels:**
+  + GEMV的bitpacking逻辑并不一定适用与GEMM以及GEMM Split-K
+  + need a flexible bitpacking logic
++ **Same kernel - multiple dtypes:**
+  + We need to handle different input dtypes:
+    + Activations can be FP16, INT8 or FP8
+    + The weights can be packed 
+
+ 
+
+
+
+![image-20241213001410852](./../../img/typora-user-images/image-20241213001410852.png)
+
+![image-20241213012333898](./../../img/typora-user-images/image-20241213012333898.png)
+
++ Split-K指在K维也分块并行化(而不是在一个kernel中用for循环), 适用于K维很大, 单个kernel内部存不下的情况
+
+区别：
+
+1. K维的block个数(num_pid_k)从`cdiv(K, BLOCKSIZE_K)`变为'cdiv(K, BLOCKSIZE_K * Split_K)'
+   split_K = 1 时，等同于GEMM
+2. **写入结果时必须用`tl.atomic_add`而不是`tl.store`**
+
+**load weight scale的两种情况：**
+
++ per-group quantization: scale和zero point需要在GEMM loop中load
++ per-channel quantization: scale 需要在GEMM loop结束后load

@@ -504,6 +504,33 @@ def unroll(K, X):
 
 
 
+#### cuda kernel
+
++ 一个thread负责$K*K$个元素，即X_unroll其中一部分的一列，因此共$Cin*H_{out}*W_{out}$个thread
++ 输入X的每个channel按顺序分成H_out*W_out个thread
+
+```C++
+__global__ void unroll_kernel(int C， int H, int W, int K, float* X, float* X_unroll) {
+    int t = blockIdx.x * blockDim.x + threadIdx.x;		// thread id
+    int H_out = H-K+1;
+    int W_out = W-K+1;
+    
+    if(t < C*H_out*W_out) {		// 越界检测
+        int c = t / (H_out*W_out);	// 一个channel有H_out*W_out个thread, 一除就得到当前是第几个channel
+        int col_idx = t % (H_out*W_out);	// 当前channel的第几个thread，即列号
+        // 计算当前thread对应X中的起始下标(h, w)
+        int h = col_idx / W_out;
+        int w = col_idx % W_out;
+        // 将X(h, w)开始的K*K元素存入X_unroll
+        for(int i = 0; i < K; i++)
+            for(int j = 0; j < K; j++){
+                row_idx = i*K+j + c*K*K		// 当前部分第几行 + 当前部分起始行
+                X_unroll[row_idx][col_idx] = X[c][h+i][w+j]
+            }
+    }
+}
+```
+
 
 
 

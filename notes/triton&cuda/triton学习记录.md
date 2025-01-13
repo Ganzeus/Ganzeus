@@ -36,6 +36,9 @@
 
 + triton kernel中一共只有四种操作：存/取数据、计算、越界检测
 
++ ==triton中不能直接存取外部数据，必须用load/store，因此triton需要手算offset，不像cuda那样可以直接用c数组方式存取==
++ **load完当前kernel需要处理的元素后，剩下的计算就可以当作普通的python顺序编程**
+
 #### grid & block
 
 + grid是一个元组
@@ -70,8 +73,8 @@
 1. pid
 2. offset
 3. mask
-4. 根据offset和mask来load数据
-5. 计算
+4. 根据offset和mask来load当前kernel所需处理的数据
+5. 计算（当成普通python顺序编程）
 6. tl.store
 
 
@@ -446,8 +449,8 @@ def swizzle2d(i, j, size_i, size_j, size_g):
 ```python
 pid = tl.program_id(axis=0)			# block序号（通过pid直接获得，不需要通过下标计算）
 
-num_pid_m = tl.cdiv(M, BLOCK_SIZE_M)	# grid矩阵行数
-num_pid_n = tl.cdiv(N, BLOCK_SIZE_N)	# grid矩阵列数
+num_pid_m = tl.cdiv(M, BLOCK_SIZE_M)	# grid矩阵行数（列方向有多少block）
+num_pid_n = tl.cdiv(N, BLOCK_SIZE_N)	# grid矩阵列数（行方向有多少block）
 
 num_pid_in_group = GROUP_SIZE_M * num_pid_n		# 一个group中包含多少block
 
@@ -521,6 +524,249 @@ def grouped_matmul_kernel(
 ```
 
 
+
+### Batched GEMM
+
+> 多了一个batch维度, 需要在batch维度分块
+>
+> 只需要将offset加上当前batch维度的第一个元素下标(batch_idx * batch_stride)
+>
+> ```python
+> batch_idx = tl.program_id(0)
+> offset_batch = batch_idx + batch_stride
+> offset += offset_batch
+> ```
+
+#### A(B, M, K) @ B(K, N) -> C(B, M, N)
+
+> 用于LLM FFN:A(B, T, Cin) @ B(Cin, Cout) -> C(B, T, Cout)
+>
+> bias: (1, N)——MxN矩阵中的每列元素加的bias常量值都不一样
+
+```python
+def matmul_triton1(A: torch.Tensor, B: torch.Tensor, bias: Optional[torch.Tensor] = None, activation: Optional[str] = None) -> torch.Tensor:
+    """
+    Implements matrix multiplication between input matrix A and B
+    
+    Args:
+        - A {torch.Tensor}: Input matrix with shape (B, T, Cin) where B is the batch size, T is the sequence length, Cin is the input dimension
+        - B {torch.Tensor}: Weight matrix with shape (Cin, Cout) where Cout is the hidden dimension
+        - bias {torch.Tensor}: Optionally add a bias to the ouput, shape (1, Cout)
+        - activation {str}: Optionally apply activation to the ouput
+
+    Returns:
+        - {torch.Tensor}: Output tensor with (B, T, Cout)
+    """
+    assert len(A.shape) == 3, "First input matrix needs to have 3 dimensions (B, T, C)"
+    assert A.device == B.device and A.is_cuda, "Both matrix should be on GPU"
+
+    if bias is not None:
+        assert bias.is_cuda, "Bias is not on GPU"
+        bias = bias.unsqueeze(0)
+        assert bias.shape[1] == B.shape[1], "Bias shape does not match output feature dimension shape"
+
+    if activation:
+        assert activation in ["gelu"], f"Only GELU activation supported as of now! Provided: {activation}"
+
+    batch_size, M, K = A.shape
+    K, N = B.shape
+
+    grid = lambda meta: (batch_size, triton.cdiv(M, meta["bm"]), triton.cdiv(N, meta["bn"]))
+
+    C = torch.empty((batch_size, M, N), device=A.device, dtype=A.dtype)
+
+    matmul_kernel1[grid](
+        A, B, C,
+        M=M, N=N, K=K,
+        A_stride_batch=A.stride(0),
+        A_stride_height=A.stride(1), A_stride_width=A.stride(2),
+        B_stride_height=B.stride(0), B_stride_width=B.stride(1),
+        C_stride_batch=C.stride(0),
+        C_stride_height=C.stride(1), C_stride_width=C.stride(2),
+        bias_ptr=bias,
+        add_bias=True if bias is not None else False,
+        activation=activation,
+        apply_activation=True if activation else False,
+        bm=16, bn=16, bk=16, group_sz=16
+    )
+
+    return C
+
+
+@triton.jit
+def matmul_kernel1(
+    a_ptr, b_ptr, c_ptr,
+    M, N, K,
+    A_stride_batch, A_stride_height, A_stride_width,
+    B_stride_height, B_stride_width,
+    C_stride_batch, C_stride_height, C_stride_width,
+    bias_ptr, add_bias:tl.constexpr,
+    activation, apply_activation:tl.constexpr,
+    bm: tl.constexpr, bn: tl.constexpr, bk: tl.constexpr,
+    group_sz: tl.constexpr
+):
+    # 1. pid
+    batch_idx = tl.program_id(0)
+    pid_m, pid_n = tl.program_id(1), tl.program_id(2)
+    num_pid_m, num_pid_n = tl.num_programs(1), tl.num_programs(2)
+    pid_m, pid_n = tl.swizzle2d(pid_m, pid_n, num_pid_m, num_pid_n, group_sz)  
+    
+    # 2. offset & mask
+    off_m = pid_m * bm + tl.arange(0, bm)
+    off_n = pid_n * bn + tl.arange(0, bn)
+
+    A_offset_batch = batch_idx * A_stride_batch
+    C_offset_batch = batch_idx * C_stride_batch
+
+    # initialize accumulator (累加器，存放矩阵乘积)
+    acc = tl.zeros((bm, bn), dtype=tl.float32)
+    for i in range(0, K, bk):       # 每层循环计算一个phase
+        off_k = i + tl.arange(0, bk)
+    
+        # offs_A, offs_B都是下标矩阵， 表示当前线程内相乘的两个矩阵在原矩阵对应的下标
+        off_A = off_k[None, :] * A_stride_width + off_m[:, None] * A_stride_height
+        mask_A = (off_k[None, :] < K) & (off_m[:, None] < M)
+
+        off_B = off_n[None, :] * B_stride_width + off_k[:, None] * B_stride_height
+        mask_B = (off_n[None, :] < N) & (off_k[:, None] < K)
+        
+        # 3. load & 计算
+        A = tl.load(a_ptr + off_A + A_offset_batch, mask_A, other=0.0)
+        B = tl.load(b_ptr + off_B, mask_B, other=0.0)
+        acc += tl.dot(A, B, allow_tf32=False)
+    
+    # 此时的acc就是一个小矩阵，因此可以直接加bias/激活函数
+    if add_bias:
+        bias = tl.load(bias_ptr + off_n, off_n < N)
+        acc += bias[None, :]
+
+    # if apply_activation:
+    #     if activation == 'gelu':
+    #         output = gelu(output)
+    
+    # 4. store
+    off_C = off_n[None, :] * C_stride_width + off_m[:, None] * C_stride_height
+    mask_C = (off_n[None, :] < N) & (off_m[:, None] < M)
+
+    # print_if(f"off_C = {off_C}, \nmask_C = {mask_C}", '')
+    tl.store(c_ptr + off_C + C_offset_batch, acc, mask=mask_C)
+```
+
+
+
+
+
+#### A(M, K) @ B(B, K, N) -> C(B, M, N)
+
+> 用于conv2d+im2col
+>
+> bias:(B, 1)——MxN矩阵中的每个元素加的bias常量值都一样, 只有在B维度上bias才不同
+
+```python
+def matmul_triton2(A: torch.Tensor, B: torch.Tensor, bias: Optional[torch.Tensor] = None, activation: Optional[str] = None) -> torch.Tensor:
+    """
+    Implements matrix multiplication between input matrix A and B
+    
+    Args:
+        - A {torch.Tensor}: Input matrix with shape (M, K)
+        - B {torch.Tensor}: Weight matrix with shape (B, K, N)
+        - bias {torch.Tensor}: Optionally add a bias to the ouput, shape (B, 1)
+        - activation {str}: Optionally apply activation to the ouput
+
+    Returns:
+        - {torch.Tensor}: Output tensor with (B, M, N)
+    """
+    assert len(B.shape) == 3, f"Second input matrix needs to have 3 dimensions (B, K, N) but {B.shape}"
+    assert A.device == B.device and A.is_cuda, "Both matrix should be on GPU"
+
+    if bias is not None:
+        assert bias.is_cuda, "Bias is not on GPU"
+        assert bias.shape[0] == B.shape[0], "Bias shape does not match output feature dimension shape"
+
+    if activation:
+        assert activation in ["gelu"], f"Only GELU activation supported as of now! Provided: {activation}"
+
+    M, K = A.shape
+    batch_size, K, N = B.shape
+
+    grid = lambda meta: (batch_size, triton.cdiv(M, meta["bm"]), triton.cdiv(N, meta["bn"]))
+
+    C = torch.empty((batch_size, M, N), device=A.device, dtype=A.dtype)
+
+    matmul_kernel2[grid](
+        A, B, C,
+        M=M, N=N, K=K,
+        A_stride_height=A.stride(0), A_stride_width=A.stride(1),
+        B_stride_batch=B.stride(0), B_stride_height=B.stride(1), B_stride_width=B.stride(2),
+        C_stride_batch=C.stride(0), C_stride_height=C.stride(1), C_stride_width=C.stride(2),
+        bias_ptr=bias,
+        add_bias=True if bias is not None else False,
+        activation=activation,
+        apply_activation=True if activation else False,
+        bm=16, bn=16, bk=16, group_sz=16
+    )
+
+    return C
+
+
+@triton.jit
+def matmul_kernel2(
+    a_ptr, b_ptr, c_ptr,
+    M, N, K,
+    A_stride_height, A_stride_width,
+    B_stride_batch, B_stride_height, B_stride_width,
+    C_stride_batch, C_stride_height, C_stride_width,
+    bias_ptr, add_bias: tl.constexpr,
+    activation, apply_activation:tl.constexpr,
+    bm: tl.constexpr, bn: tl.constexpr, bk: tl.constexpr,
+    group_sz: tl.constexpr
+):
+    # 1. pid
+    batch_idx = tl.program_id(0)
+    pid_m, pid_n = tl.program_id(1), tl.program_id(2)
+    num_pid_m, num_pid_n = tl.num_programs(1), tl.num_programs(2)
+    pid_m, pid_n = tl.swizzle2d(pid_m, pid_n, num_pid_m, num_pid_n, group_sz)  
+    
+    # 2. offset & mask
+    off_m = pid_m * bm + tl.arange(0, bm)
+    off_n = pid_n * bn + tl.arange(0, bn)
+
+    B_offset_batch = batch_idx * B_stride_batch
+    C_offset_batch = batch_idx * C_stride_batch
+
+    # initialize accumulator (累加器，存放矩阵乘积)
+    acc = tl.zeros((bm, bn), dtype=tl.float32)
+    for i in range(0, K, bk):       # 每层循环计算一个phase
+        off_k = i + tl.arange(0, bk)
+    
+        # offs_A, offs_B都是下标矩阵， 表示当前线程内相乘的两个矩阵在原矩阵对应的下标
+        off_A = off_k[None, :] * A_stride_width + off_m[:, None] * A_stride_height
+        mask_A = (off_k[None, :] < K) & (off_m[:, None] < M)
+
+        off_B = off_n[None, :] * B_stride_width + off_k[:, None] * B_stride_height
+        mask_B = (off_n[None, :] < N) & (off_k[:, None] < K)
+        
+        # 3. load & 计算
+        A = tl.load(a_ptr + off_A, mask_A, other=0.0)
+        B = tl.load(b_ptr + off_B + B_offset_batch, mask_B, other=0.0)
+        acc += tl.dot(A, B, allow_tf32=False)
+    
+    # 此时的acc就是一个小矩阵，因此可以直接加bias/激活函数
+    if add_bias:
+        bias = tl.load(bias_ptr + batch_idx)
+        acc += bias
+
+    # if apply_activation:
+    #     if activation == 'gelu':
+    #         output = gelu(output)
+    
+    # 4. store
+    off_C = off_n[None, :] * C_stride_width + off_m[:, None] * C_stride_height
+    mask_C = (off_n[None, :] < N) & (off_m[:, None] < M)
+
+    # print_if(f"off_C = {off_C}, \nmask_C = {mask_C}", '')
+    tl.store(c_ptr + off_C + C_offset_batch, acc, mask=mask_C)
+```
 
 
 
@@ -741,4 +987,141 @@ def conv2d_kernel(
 
 #### 原理
 
-![image-20241128153646492](./../../img/typora-user-images/image-20241128153646492.png)
+![image-20241209215700032](./../../img/typora-user-images/image-20241209215700032.png)
+
+#### Unroll实现
+
+##### python native
+
+```python
+# stride = 1
+def unroll(K, X):
+    B, C, H, W = X.shape
+    H_out, W_out = H-K+1, W-K+1
+    X_unroll = torch.zeros(B, C*K*K, H_out*W_out, device=device)
+    for c in range(C):      # 对于每个channel——每次计算（k*k, H_out*W_out)这一部分
+        col_idx = 0
+        for h in range(H_out):
+            for w in range(W_out):      # 每列起始坐标(h, w)
+                # 将X(h, w)开始的K*K个元素存入X_unroll
+                for i in range(K):
+                    for j in range(K):
+                        row_idx = i*K+j + c*K*K         # 当前部分的第几行+当前部分的起始行
+                        X_unroll[:, row_idx, col_idx] = X[:, c, h+i, w+j]
+                col_idx += 1            # 进入X_unroll的下一列
+
+    return X_unroll
+```
+
+```python
+# 支持自定义stride
+def unroll(X, K, stride=1):
+    B, C, H, W = X.shape
+    H_out, W_out = (H - K) // stride + 1, (W - K) // stride + 1
+    X_unroll = torch.zeros(B, C*K*K, H_out*W_out, dtype = X.dtype, device=X.device)
+    for c in range(C):
+        col_idx = 0
+        h = 0
+        for _ in range(H_out):
+            w = 0
+            for _ in range(W_out):
+                print(f"({h}, {w})")
+                # 将X(h, w)开始的K*K个元素存入X_unroll
+                for i in range(K):
+                    for j in range(K):
+                        row_idx = i*K+j + c*K*K         # 当前部分的第几行+当前部分的起始行
+                        X_unroll[:, row_idx, col_idx] = X[:, c, h+i, w+j]
+                col_idx += 1            # 进入X_unroll的下一列
+                w += stride
+            h += stride
+    return X_unroll
+```
+
+
+
+
+
+
+
+
+
+### Low-bit Matmul
+
+#### 量化公式（线性量化）
+
+> r表示需要量化的浮点数tensor, q表示量化后的tensor
+> $r_{max}、r_{min}是实际tensor的最值, 而q_{max}、q_{min}是int类型的最值$
+> $例如：进行int8量化时, q_{max}=127, q_{min}=-128$
+
+**非对称量化**
+
++ scale factor
+  $$
+  scale = \frac{r_{max}-r_{min}}{q_{max}-q_{min}}
+  $$
+
++ zero point
+  $$
+  zero = int(round(q_{min}-\frac{r_{min}}{scale}))
+  $$
+
++ quantize(fp->int)
+  $$
+  q = int(round(\frac{r}{scale}+zero))
+  $$
+
++ dequantize(int->fp)
+  $$
+  dq = scale * (q-zero)
+  $$
+
+
+
+**对称量化（zero point=0)**
+
++ scale factor
+  $$
+  scale = \frac{r_{max}}{q_{max}}
+  $$
+
++ quantize(fp->int)
+  $$
+  q = int(round(\frac{r}{scale}))
+  $$
+
++ dequantize(int->fp)
+  $$
+  dq = scale * q
+  $$
+
+
+
+
+
+#### 量化流程
+
+> C = matmul(A, dequantize(B, scales, zeros))
+
+1. 在外部量化(计算scale/zero_point, q = int(r/s + z)+bitpacking完成后，将q, s, z传入kernel
+2. kernel内部:
+   1. load
+   2. unpack+dequantize(dq = s(q-z))
+   3. matmul
+   4. store
+
+![image-20241213001410852](./../../img/typora-user-images/image-20241213001410852.png)
+
+![image-20241213012333898](./../../img/typora-user-images/image-20241213012333898.png)
+
++ Split-K指在K维也分块并行化(而不是在一个kernel中用for循环), 适用于K维很大, 单个kernel内部存不下的情况
+
+区别：
+
+1. K维的block个数(num_pid_k)从`cdiv(K, BLOCKSIZE_K)`变为'cdiv(K, BLOCKSIZE_K * Split_K)'
+   split_K = 1 时，等同于GEMM
+2. **写入结果时必须用`tl.atomic_add`而不是`tl.store`**
+
+**load weight scale的两种情况：**
+
++ per-group quantization: scale和zero point需要在GEMM loop中load
++ per-channel quantization: scale 需要在GEMM loop结束后load
