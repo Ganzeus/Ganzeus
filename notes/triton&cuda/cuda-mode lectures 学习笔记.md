@@ -276,3 +276,77 @@ print(square_matrix_extension.square_matrix(a))
 
 + per-group quantization: scale和zero point需要在GEMM loop中load
 + per-channel quantization: scale 需要在GEMM loop结束后load
+
+
+
+## Lecture 50: CUDA, Triton, Flash Attention: a learning journey
+
+> AI总结：
+>
+> AI Summary: Abstract: This talk chronicles a personal journey of learning GPU programming, specifically focusing on CUDA, Triton, and the Flash Attention algorithm. The speaker, Omar, emphasizes a practical, goal-oriented approach to learning, driven by the desire to understand and implement complex deep learning concepts. He challenges the traditional "teach a man to fish" adage, advocating instead for teaching the skill of learning itself, particularly in rapidly evolving technological fields. Key strategies discussed include setting concrete, measurable objectives (like understanding a specific tutorial), leveraging Large Language Models (LLMs) for guidance and overcoming knowledge gaps, iterative learning between different resources, and emphasizing hands-on coding and debugging. The talk also stresses the importance of building confidence through tackling increasingly challenging tasks, ignoring distractions and hype, and maintaining long-term commitment for mastery. The "secret ingredient" is identified as the learner's own belief in their ability to learn and grow. The Q&A session addresses various topics, including career advice, the role of AI tools, the necessity of low-level skills, open-source contribution, and the 10,000-hour rule.   Omar's Journey: Learning CUDA, Triton, and Flash Attention *   *[0:00:00](https://www.youtube.com/watch?v=4O-t7SwArkI) Introduction:* This is the 50th DPU Mode lecture, and the speaker, Mark, welcomes Omar, a special guest, to discuss his journey learning CUDA, Triton, and Flash Attention. *   *[0:01:33](https://www.youtube.com/watch?v=4O-t7SwArkI&t=93s) Omar's Background:* Omar started his performance work in 2022 and shares his learning journey, emphasizing practical problem-solving. *   *[0:02:14](https://www.youtube.com/watch?v=4O-t7SwArkI&t=134s) Overview:* Omar outlines the talk's focus: not teaching CUDA, Triton, and Flash Attention directly (as he has a 7.5-hour video on that), but exploring his learning process. *   *[0:02:40](https://www.youtube.com/watch?v=4O-t7SwArkI&t=160s) Machine Learning Start:* Omar's machine learning journey began in late 2022 with an image captioning project and experimenting with Stable Diffusion. *   *[0:03:32](https://www.youtube.com/watch?v=4O-t7SwArkI&t=212s) Commitment:* He quit his job to fully master Stable Diffusion, demonstrating a "monk mode" approach to learning. *   *[0:04:30](https://www.youtube.com/watch?v=4O-t7SwArkI&t=270s) Ancient Wisdom Challenged:* Traditional wisdom ("teach a man to fish") is updated to "teach a man to learn new skills." *   *[0:06:29](https://www.youtube.com/watch?v=4O-t7SwArkI&t=389s) Technology Introduction:* High-level overview of Flash Attention (optimized attention mechanism), CUDA (Nvidia's software stack for GPU programming), and Triton (OpenAI's project for writing GPU kernels in Python). *   *[0:08:09](https://www.youtube.com/watch?v=4O-t7SwArkI&t=489s) GPU Memory Hierarchy:* Explanation of GPU memory (DRAM/HBM vs. SRAM) and its impact on performance. Kernel fusion is introduced as a technique to minimize data transfers. *   *[0:12:27](https://www.youtube.com/watch?v=4O-t7SwArkI&t=747s) Learning Approach:* Key advice: before starting, ask "why" you want to learn something. Avoid learning based on hype. Focus on solving practical problems. * *[0:13:55](https://www.youtube.com/watch?v=4O-t7SwArkI&t=835s) Using LLMs:* Recommends using LLMs (like ChatGPT or Grok) for guidance and overcoming learning obstacles. Roadmaps are unnecessary; prompt LLMs to build personalized learning paths. *  *[0:17:12](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1032s) Hands-On Learning:* Do the triton tutorials; run the code and debug it, run it with The Interpreter, and learn by doing. *   *[0:18:02](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1082s) Goal Setting:* Set specific, measurable learning goals. Omar's goal was understanding the "fused attention" tutorial on the Triton website. *   *[0:20:30](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1230s) Learning Strategy:* Avoid being influenced by others' tutorials initially. Challenge yourself. Define the "rules" of your learning challenge. *   *[0:22:08](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1328s) Practical Steps:* Started with the "vector addition" tutorial on the Triton website. Encountered concepts like pointers, block size, and thread IDs. *   *[0:23:13](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1393s) Overcoming Obstacles:* When blocked, use the debugger or prompt LLMs to identify missing knowledge. *   *[0:24:18](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1458s) Targeted Learning:* When seeking external resources (like the "Programming Massively Parallel Processors" book), learn only what's relevant to the immediate task. * *[0:26:48](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1608s): Final Boss:* Finish the tutorials, then move on to the "final boss" - flash attention. *   *[0:27:04](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1624s) Paper Reading Strategy:* Read papers top-to-bottom, even if understanding is low. Annotate unclear concepts. Highlight after reading. *   *[0:30:13](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1813s) Learning Roadmap:* Built a roadmap by identifying knowledge gaps in the Flash Attention paper (softmax, online softmax, GPU programming, backpropagation). *   *[0:31:28](https://www.youtube.com/watch?v=4O-t7SwArkI&t=1888s) Tackling Concepts:* Addressed each concept systematically. For online softmax, studied relevant papers, coded the algorithm, and worked through proofs. *   *[0:36:09](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2169s) Iterative Learning:* Go back and forth between different resources (e.g., the Flash Attention paper and the online softmax paper) to reinforce understanding. *   *[0:37:28](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2248s) Combining Code and Theory:* Alternate between reading the paper and examining the code for new architectures. *   *[0:38:17](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2297s) Block Matrix Multiplication:* Learned about block matrix multiplication, crucial for understanding Flash Attention's block-by-block computation. *   *[0:39:58](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2398s) Tensor Shapes and Strides:* Understanding tensor shapes and strides is essential for GPU programming, as GPUs work with memory pointers. *   *[0:44:04](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2644s) Backpropagation:* The most challenging part, requiring understanding of gradients and chain rule. * *[0:48:51](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2931s): Long-Term Goals:* Having measurable and comparable long-term goals are important. * *[0:49:19](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2959s): Next Steps:* Stay consistent, follow practical curiosity, ignore the hype, and commit long-term for mastery. * *[0:49:47](https://www.youtube.com/watch?v=4O-t7SwArkI&t=2987s) Following Curiosity:* Focus on consistency and practical problems. *   *[0:52:08](https://www.youtube.com/watch?v=4O-t7SwArkI&t=3128s) Accelerated Learning:* Modern tools (LLMs) significantly accelerate learning. Prompting replaces time-consuming searches. *   *[0:53:54](https://www.youtube.com/watch?v=4O-t7SwArkI&t=3234s) Dual Stream Learning:* Keep up with new research ("noise stream") but maintain a long-term learning focus. * *[0:55:32](https://www.youtube.com/watch?v=4O-t7SwArkI&t=3332s) Secret Ingredient, Confidence:* The most crucial element is *you*. Build confidence by tackling challenging tasks. Push yourself beyond tutorials. *  *[0:56:48](https://www.youtube.com/watch?v=4O-t7SwArkI&t=3408s): Building Confidence:* Confidence comes from doing hard things, and pushing yourself further. *   *[0:57:16](https://www.youtube.com/watch?v=4O-t7SwArkI&t=3436s) Leaderboard Participation:* Encourages participating in the GPU Mode leaderboard, even if not fully confident. The only failure is not showing up. *   *[0:57:50](https://www.youtube.com/watch?v=4O-t7SwArkI&t=3470s) Q&A Session:* Answers questions about quitting his job, learning roadmaps, using AI tools, low-level skills, GPU access, AI research, contributing to open source, and more. * *[1:18:27](https://www.youtube.com/watch?v=4O-t7SwArkI&t=4707s) 10,000 Hours Rule:* Is the only rule that matters in life.
+
+#### Challenge Ancient Wisdom
+
+~~Teach a man to fish and you feed him for a lifetime.~~
+
+Teach a man how to learn new skills and he'll build a fishing boat to feed the entire village
+
+
+
+#### How to Start
+
+1. 问自己为什么要学，目的是什么？
+2. go to triton website. stucked-> ask GPT
+3. get your hands dirty: triton tutorials(一定要动手写代码！！！)
+4. （重要）set a goal/dream: understand fused attention tutorial 
+   **每天问问自己：我是不是更加靠近我的目标了？还是一直在原地踏步？**
+
+
+
+#### Jamil的学习历程
+
+1. vector add tutorial
+   + pid、block都是啥？完全看不懂
+2. 问GPT，如何补全需要的知识？
+3. 需要学cuda：pmpp book，**但不要盲目从头到尾的看，只需要学习足够的知识直到能够理解vector addition tutorial即可**——**always remember where we you left off**
+4. layernorm tutorial: 需要先学backprop, 一定程度后再回来看完layernorm
+
+
+
+最终到了flash attention tutorial：
+
+1. read the flash attention paper——从头到尾读，哪怕只理解10%
+   + while reading the paper, you're constantly reminded of how many things you don't understand and this makes you uncomfortable: it's fine. Keep going on.
+   + Once you reach the end, you'll have a clear vision of what you don't know, and now you can come up with a plan for how to fill your knowledge gaps.
+2. What ingredients do we need to understand FA?
+   1. Attention(safe softmax、online softmax)
+   2. GPU programming(HBM&SM、Tiling、Tensor、CUDA/Triton/ROCm)
+   3. Backpropagation(Gradients)
+
+
+
+#### Reading is not enough
+
+—— you need active learning
+
++ If there is an algorithm, code it
++ If there is an algorithm, test it on paper
++ If there is a proof:
+  + re-write it yourself on paper the first time
+  + If you want a deeper understanding, try to re-do the proof without having  it in font of you
+
+
+
+#### What shoud I learn next?
+
++ **First Rule**: follow curiosity, 不要跟风
++ **Second Rule**: focus on consistency. It doesn't matter how bad you start is, 
+  with consistency, you can fix nay initial bias
++ **Third Rule**: if your learning speed hasn't accelaratedby using LLMs, you're doing something wrong.
+
+
+
+#### Secrect Ingredient: you
+
++ convince yourself 你可以，你能学会
++ build confidence
