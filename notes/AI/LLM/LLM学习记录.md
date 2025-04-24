@@ -438,7 +438,8 @@ KV Cache 的核心是缓存之前计算的键（keys）和值（values），避�
 如图，
 
 + **对于新的token，计算其attention score只需要最后一行Q**，即当前token所在的Q，之前的token完全用不到，因此没必要cache之前的Q。
-+ 而对于KV，计算新token的attention score需要用到前面所有行，因此缓存KV非常有必要
+  + 而对于KV，计算新token的attention score需要用到前面所有行，因此缓存KV非常有必要
+
 
 
 

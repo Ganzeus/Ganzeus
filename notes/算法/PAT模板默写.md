@@ -222,7 +222,7 @@ void insert(node* &root, int x) {   // 注意root要加引用
 }
 ```
 
-#####建树
+##### 建树
 
 ```C++
 int a[maxn];
@@ -250,7 +250,7 @@ void preOrder(node* root) {
 
 ### 树（静态+多子）
 
-#####存储结构
+##### 存储结构
 
 ```C++
 struct Node{
