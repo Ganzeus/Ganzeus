@@ -54,6 +54,27 @@
 
 
 
+#### tl.load原理和mask判断逻辑
+
+`tl.load(ptr + offset, mask=mask)`
+
++ ptr是起始指针
++ offset是从该指针的偏移量（内存位置下标）
++ mask判断offset中的每个位置是否应该被加载
+
++ **mask形状一定要和offset相同！！！**
+
+**mask判断逻辑：**
+
++ mask是bool矩阵，形状和offset一样，其中的值为true时就load，false就不能load
++ 创建mask时只需要管offset的下标有没有越界即可
+
+**load逻辑:**
+
++ tensor物理结构为一维向量，起始地址为ptr
++ offset中的内容为一维向量的下标(0~n), load函数按照offset中给定的下标进行读操作
++ **load的输出和offset结构相同的tensor，其中的每个元素就是对应offset中给定下标的真正元素**
+
 
 
 ### 写kernel步骤
@@ -176,6 +197,12 @@ grid = lambda meta: (triton.cdiv(m, meta['bm']),  triton.cdiv(n, meta['bn']))
 
 + configs列表定义了多个配置组合，meta字典会自动从这些配置中生成
 + key参数(`['m', 'n', 'k']`)表明，每当m、n、k变化时，triton就会重新进行autotune，来确定当前数据规模的最佳配置
+
+
+
+### 自定义stride改变矩阵结构
+
+![image-20250515191949030](./../../img/typora-user-images/image-20250515191949030.png)
 
 
 
@@ -772,7 +799,7 @@ def matmul_kernel2(
 
 
 
-### Transpose2D
+### Transpose2D-1
 
 #### 图解
 
@@ -821,6 +848,60 @@ def transpose_kernel(
 ```
 
 
+
+### Transpose2D-2
+
+> 利用stride改变矩阵结构的特性，直接修改内存读入逻辑即可实现转置
+
+#### 图解
+
+![image-20250516160831797](./../../img/typora-user-images/image-20250516160831797.png)
+
+#### 代码
+
+```python
+def transpose2d_triton(x):
+    check_tensors_gpu_ready(x)
+    M, N = x.shape
+    y = torch.empty((N, M), device=device, dtype=torch.float16)
+
+    grid = lambda META: (triton.cdiv(M, META['bm']), triton.cdiv(N, META['bn']))
+    
+    transpose_kernel[grid](x, y, M, N, x.stride(0), x.stride(1), y.stride(0), y.stride(1))
+
+    return y
+
+@triton.jit
+def transpose_kernel(
+    x_ptr,   # input
+    y_ptr,   # output
+    M,       # number of rows of x
+    N,       # number of columns of x
+    row_stride_x,
+    col_stride_x,
+    row_stride_y,
+    col_stride_y,
+    bm: tl.constexpr = 16, bn: tl.constexpr = 16
+):
+    pid_m, pid_n = tl.program_id(0), tl.program_id(1)
+
+    offs_row = pid_m * bm + tl.arange(0, bm)
+    offs_col = pid_n * bn + tl.arange(0, bn)
+
+    # offs_X = offs_col[None, :] * col_stride_x + offs_row[:, None] * row_stride_x
+    offs_X_trans = offs_col[:, None] * col_stride_x + offs_row[None, :] * row_stride_x      # 调换行列顺序即可转置！
+    # mask_X_trans = (offs_col[:, None] < N) & (offs_row[None, :] < M)
+
+
+    offs_Y = offs_col[:, None] * row_stride_y + offs_row[None, :] * col_stride_y
+    # mask_Y = (offs_col[:, None] < N) & (offs_row[None, :] < M)
+
+    mask = (offs_col[:, None] < N) & (offs_row[None, :] < M)        # mask_X_trans = mask_Y
+
+    x = tl.load(x_ptr + offs_X_trans, mask=mask)
+    # print_if(x, '')
+    tl.store(y_ptr + offs_Y, x, mask=mask)
+```
 
 
 
@@ -1037,14 +1118,6 @@ def unroll(X, K, stride=1):
     return X_unroll
 ```
 
-
-
-
-
-
-
-
-
 ### Low-bit Matmul
 
 #### 量化公式（线性量化）
@@ -1125,3 +1198,11 @@ def unroll(X, K, stride=1):
 
 + per-group quantization: scale和zero point需要在GEMM loop中load
 + per-channel quantization: scale 需要在GEMM loop结束后load
+
+
+
+### FlashAttention-V2
+
+![image-20250516171643498](./../../img/typora-user-images/image-20250516171643498.png)
+
+#### helper function

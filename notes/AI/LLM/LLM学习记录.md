@@ -19,7 +19,64 @@
 
 
 
+### HuggingFace模型权重文件解析
 
+<img src="./../../../img/typora-user-images/image-20250521171410439.png" alt="image-20250521171410439" style="zoom: 33%;" /> 
+
++ `config.json`模型配置文件：
+  	存储模型结构（transformer具体结构）、超参数（网络层数、隐藏层维度，attention head数）、vocab_size、激活函数类型、weight初始化逻辑等等，用于加载和构建模型架构。
+
++ `generation_config.json`:与文本生成相关的配置文件，通常包含生成任务的超参数和策略。
+
+  常见字段：
+
+  - **`max_length`**：生成的最大文本长度。
+  - **`min_length`**：生成的最小文本长度。
+  - **`temperature`**：控制生成文本的随机性（较高值增加随机性）。
+  - **`top_k`**：Top-K 采样中保留的最高概率的词汇数量。
+  - **`top_p`**：Top-P（核采样）中保留的累积概率阈值。
+  - **`repetition_penalty`**：惩罚重复生成的概率。
+  - **`num_beams`**：生成时的 beam search 数量。
+
++ **模型权重文件**：torch和hf两种格式
+
+  1. Pytorch格式——`pytorch_model.pth`: 二进制文件，以字典形式(key, value)保存模型权重
+     key为网络层名称，value为对应tensor
+  2. SafeTensor格式——`model.safetensors`: 和pth文件功能相同，优点是更安全更高效且体积小
+
++ model.safetensors.index.json: 用于描述模型权重文件的索引信息
+
+  常见字段：
+
+  - **`metadata`**：元信息，包含权重文件的版本、模型类型等信息。
+  - **`weight_map`**：权重文件的映射关系，指明每个权重张量存储在具体的哪个文件中。
+  - **`tensors`**：列出模型中所有张量的名称、形状和数据类型。
+
++ `tokenizer.json`: 存储tokenizer的完整信息，包括词汇表和分词规则。
+
+  常见字段：
+
+  - **`model`**：分词器的模型信息（如 BPE、WordPiece、SentencePiece）。
+  - **`vocab`**：词汇表，包含 token 和其对应的 ID。
+  - **`merges`**：如果是 BPE 分词器，包含合并规则。
+  - **`added_tokens`**：用户自定义的额外 token（如特殊 token `[CLS]`、`[SEP]`）。
+  - **`normalizer`**：文本规范化规则（如小写转换、Unicode 规范化）。
+  - **`pre_tokenizer`**：分词前的文本预处理规则。
+  - **`post_processor`**：分词后的后处理规则。
+
++ `tokenizer_config.json`: 存储分词器的配置信息，通常是 `tokenizer.json` 的简化版本。
+
+  常见字段：
+
+  **`model_type`**：分词器所属的模型类型（如 `bert`、`gpt2`、`t5`）。
+
+  **`vocab_size`**：词汇表大小。
+
+  **`max_len`**：分词器支持的最大序列长度。
+
+  **`do_lower_case`**：是否将文本转换为小写（主要用于 `BERT`）。
+
+  **`special_tokens`**：特殊 token（如 `[PAD]`、`[CLS]`）。
 
 ## Positional Encoding
 
@@ -589,4 +646,18 @@ Softmax Tiling
 ##### Flash Attention
 
 ![image-20250228195417592](./../../../img/typora-user-images/image-20250228195417592.png)
+
+ 
+
+
+
+#### forward pass（paper）
+
+##### FlashAttention-1
+
+![image-20250516171422928](./../../../img/typora-user-images/image-20250516171422928.png)
+
+##### FlashAttention-2
+
+![image-20250516171549290](./../../../img/typora-user-images/image-20250516171549290.png)
 

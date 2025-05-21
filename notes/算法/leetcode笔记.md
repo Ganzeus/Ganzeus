@@ -510,3 +510,173 @@ def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节
 
 ## 二刷
 
+
+
+
+
+
+
+
+
+## HOT100刷题记录
+
+### 哈希
+
+
+
+
+
+
+
+### 双指针
+
+
+
+
+
+
+
+### 滑动窗口
+
+
+
+
+
+### 子串
+
+
+
+
+
+### 普通数组
+
+
+
+
+
+
+### 矩阵
+
+
+
+
+
+
+
+### 链表
+
+
+
+
+
+
+
+### 二叉树
+
+
+
+
+
+
+
+### 图
+
+#### 200.岛屿数量
+
+> 常规dfs
+
+```c++
+class Solution {
+private:
+    vector<vector<bool>> is_visited{};      // 列表初始化
+public:
+    bool is_valid(vector<vector<char>>& grid, int row, int col) {
+        int m = grid.size(), n = grid[0].size();
+        return row >= 0 && col >= 0 && row < m && col < n;
+    }
+
+    void dfs(vector<vector<char>>& grid, int row, int col) {
+        if(!is_valid(grid, row, col) || grid[row][col] == '0' || is_visited[row][col]) {    // 越界或遇到0或访问过就返回
+            return;
+        }
+        is_visited[row][col] = true;
+        dfs(grid, row, col+1);
+        dfs(grid, row+1, col);
+        dfs(grid, row, col-1);
+        dfs(grid, row-1, col);
+    }
+    int numIslands(vector<vector<char>>& grid) {
+        int ans = 0;    //岛屿数量
+        int m = grid.size(), n = grid[0].size();
+        // 重新设置大小
+        is_visited = vector<vector<bool>>(m, vector<bool>(n, false));
+        
+        for(int i = 0; i < m; i++) {
+            for(int j = 0; j < n; j++) {
+                if(!is_visited[i][j] && grid[i][j] == '1') {      // 未访问过且为1
+                    dfs(grid, i, j);
+                    ans++;
+                }
+            }
+        }
+        return ans;
+
+    }
+};
+```
+
+
+
+
+
+
+
+### 回溯
+
+
+
+
+
+
+
+### 二分
+
+
+
+
+
+
+
+### 栈
+
+
+
+
+
+
+
+### 堆
+
+
+
+
+
+
+
+### 贪心
+
+
+
+
+### dp
+
+
+
+### 多维dp
+
+
+
+
+
+### 技巧
+

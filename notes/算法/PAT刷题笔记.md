@@ -384,7 +384,7 @@ string rev(string s) {
 Node* create(int postL, int postR, int inL, int inR) {
   if(postL > postR) return NULL;  // 递归边界
   Node* root = new Node;
-  root->data = post[postR];
+  root->data = post[postR];		// 根节点为后序的最后一个位置
   int k = inL;
   for(; k <= inR; k++) {  // 找树根下标k
     if(in[k] == post[postR]) break;
