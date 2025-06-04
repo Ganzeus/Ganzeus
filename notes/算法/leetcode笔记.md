@@ -127,6 +127,19 @@ int upperBound(vector<int>& a, int k) { // 大于k的最小下标
 
 
 
+#### 二叉树求高度
+
+```c++
+int maxDepth(TreeNode* root) {			// 自底向上求高度
+    if(root == nullptr) return 0;		// 直到遍历到叶子才会返回
+    int maxL = maxDepth(root->left);
+    int maxR = maxDepth(root->right);
+    return max(maxL, maxR) + 1;			// 不断向上返回当前结点最大深度，直到树根
+}
+```
+
+
+
 ### 二叉树层序遍历（BFS)
 
 ```python
@@ -156,7 +169,7 @@ def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节
 
 
 
-## 一刷
+## 灵神一刷
 
 #### 209.长度最小的子数组
 
@@ -493,7 +506,7 @@ def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节
 
 #### 103.二叉树的锯齿形层序遍历
 
-> 每层先左->右，再右->左
+思考：每层先左->右，再右->左
 
 灵神：
 
@@ -502,13 +515,41 @@ def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节
 
 
 
+#### 78.子集
+
+> 求出一个集合的所有子集
+
+思考：枚举子集长度(0~n),每次用dfs求出当前长度的所有可能，只往右走不往左走就能保证不重复——$O(n * 2^n)$
+
+灵神：
+
+1. 从输入角度思考：对于每个元素，根据选还是不选构建二叉树，叶子就是所有的子集——$O(n*2^n)$
+
+<img src="./../../img/typora-user-images/image-20250528162302905.png" alt="image-20250528162302905" style="zoom:25%;" />
+
+2. 从答案角度思考：枚举第一个选谁，第二个选谁..., 并且只往右不往左保证不重复，此时每个结点都是答案——$O(n*2^n)$
+
+<img src="./../../img/typora-user-images/image-20250528163736805.png" alt="image-20250528163736805" style="zoom:25%;" />
 
 
 
+#### 131.分割回文串
+
+思考：根据每个分割位置是否要切来构建二叉树，得到所有的分割可能，再判断每种可能是不是满足要求
+
+灵神：
+
++ 对每个分割位置枚举切还是不切，相当于从答案角度思考的子串问题，为确保不重复必须往右枚举
 
 
 
-## 二刷
+#### 77.组合
+
+> 给定了子集长度求所有子集
+
+思考：直接dfs，比求所有子集简单
+
+## 灵神二刷
 
 
 
@@ -565,6 +606,139 @@ def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节
 
 ### 链表
 
+#### 160.相交链表
+
+> 1. 双指针
+
+```C++
+class Solution {
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        int lenA = 0, lenB = 0;
+        ListNode* cpA = headA;
+        ListNode* cpB = headB;
+        while(cpA != nullptr) {
+            cpA = cpA->next;
+            lenA++;
+        }
+        while(cpB != nullptr) {
+            cpB = cpB->next;
+            lenB++;
+        }
+        ListNode* ptrA = headA;
+        ListNode* ptrB = headB;
+    
+        if(lenA > lenB) {
+            while(lenA != lenB) {
+                ptrA = ptrA->next;
+                lenA--;
+            }
+        }else {
+            while(lenA != lenB) {
+                ptrB = ptrB->next;
+                lenB--;
+            }
+        }
+        while(ptrA != ptrB) {
+            ptrA = ptrA->next;
+            ptrB = ptrB->next;
+        }
+        return ptrA;
+    }
+};
+```
+
+> 2. 直接保存A链表结点，接着遍历B遇到相同结点就返回
+
+```c++
+class Solution {
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        unordered_set<ListNode*> visited;
+        while(headA != nullptr) {     // 保存A的所有节点
+            visited.insert(headA);
+            headA = headA->next;
+        }
+        while(headB != nullptr) {
+            if(visited.count(headB)) return headB;
+            headB = headB->next;
+        }
+        return headB;
+    }
+};
+```
+
+
+
+#### 260.反转链表
+
+> pre, cur, next三指针
+
+```c++
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        if(head == nullptr) return head;
+        ListNode* pre = nullptr, * cur = head, * next = head->next;
+        
+        while(cur != nullptr) {
+            cur->next = pre;
+            pre = cur;
+            cur = next;
+            if(next != nullptr) next = next->next;
+        }
+        return pre;
+    }
+};
+```
+
+
+
+#### 234.回文链表
+
+> 将链表后半部分反转，从中间切割后双指针同时读
+
+```c++
+class Solution {
+public:
+    bool isPalindrome(ListNode* head) {
+        int n = 0;
+        ListNode* tmp = head;
+        while(tmp != nullptr) {     // 计算链表长度
+            n++;
+            tmp = tmp->next;
+        }
+        if(n==1) return true;
+        ListNode* p1 = head, * p2 = head, * pre = nullptr;
+        for(int i = 0; i < n / 2; i++) { // 移动n/2次到后半部分
+            pre = p2;
+            p2 = p2->next;
+        }
+        if(n % 2 != 0) p2 = p2->next;   // 奇数忽略最中间结点
+        pre->next = nullptr;    // 前半段的最后一个节点
+        
+        // 反转后半段
+        pre = nullptr;
+        ListNode* cur = p2;
+        while(cur != nullptr) {
+            ListNode* next = cur->next;
+            cur->next = pre;
+            pre = cur;
+            cur = next;
+        }
+
+        // 双指针同时遍历两个链表
+        p2 = pre;
+        while(p1 != nullptr && p2 != nullptr) {
+            if(p1->val != p2->val) return false;
+            p1 = p1->next;
+            p2 = p2->next;
+        }
+        return true;
+    }
+};
+```
+
 
 
 
@@ -573,7 +747,190 @@ def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节
 
 ### 二叉树
 
+#### 94.二叉树的中序遍历
 
+> 康复训练
+
+```c++
+class Solution {
+private:
+    vector<int> ans;
+public:
+    void inOrder(TreeNode* root) {
+        if(root == nullptr) return;
+        inOrder(root->left);
+        ans.push_back(root->val);
+        inOrder(root->right);
+    }
+    vector<int> inorderTraversal(TreeNode* root) {
+        inOrder(root);
+        return ans;
+    }
+};
+```
+
+
+
+#### 104.二叉树的最大深度
+
+> 1. 最大高度(自底向上计算)
+
+```C++
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if(root == nullptr) return 0;		// 直到遍历到叶子才会返回
+        int maxL = maxDepth(root->left);
+        int maxR = maxDepth(root->right);
+        return max(maxL, maxR) + 1;			// 不断向上返回当前结点最大深度，直到树根
+    }
+};
+```
+
+> 2. 最大深度(自顶向下计算)
+
+```C++
+class Solution {
+public:
+    int maxdepth = 0;
+    void dfs(TreeNode* cur, int depth) {
+        if(cur == nullptr) return;
+        maxdepth = max(depth, maxdepth);	// 向下遍历的过程中直接计算最大深度
+        dfs(cur->left, depth+1);
+        dfs(cur->right, depth+1);
+    }
+    int maxDepth(TreeNode* root) {
+        dfs(root, 1);
+        return maxdepth;
+    }
+};
+```
+
+
+
+#### 226.翻转二叉树
+
+> 什么弱智题？自顶向下和自底向上没区别，随便什么时候交换
+
+```c++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if(root == nullptr) return nullptr;
+        TreeNode* tmp = root->left;
+        root->left = root->right;
+        root->right = tmp;
+        invertTree(root->left);
+        invertTree(root->right);
+        return root;
+    }
+};
+```
+
+
+
+#### 101.对称二叉树
+
+> 1. 翻转右子树，再判断左右子树是否相同
+
+```C++
+class Solution {
+public:
+    void invert(TreeNode* root) {               // 左右翻转
+        if(root == nullptr) return;
+        TreeNode* tmp = root->left;
+        root->left = root->right;
+        root->right = tmp;
+        invert(root->left);
+        invert(root->right);
+    }
+    bool is_equal(TreeNode* root1, TreeNode* root2) {   // 判断两个树是否相同
+        if(root1 == nullptr && root2 == nullptr) return true;
+        if(root1 == nullptr && root2 != nullptr) return false;
+        if(root1 != nullptr && root2 == nullptr) return false;
+        return (root1->val == root2->val) && is_equal(root1->left, root2->left) && is_equal(root1->right, root2->right);
+    }
+    bool isSymmetric(TreeNode* root) {
+        invert(root->right);
+        return is_equal(root->left, root->right);
+    }
+};
+```
+
+> 2. 不需要翻转右子树，直接在遍历过程中判断(一个先左后右，一个先右后左)
+
+```C++
+class Solution {
+public:
+    bool isSym(TreeNode* root1, TreeNode* root2) {     // 判断两个树是否对称
+        if(root1 == nullptr && root2 == nullptr) return true;
+        if(root1 == nullptr && root2 != nullptr) return false;
+        if(root1 != nullptr && root2 == nullptr) return false;
+        return (root1->val == root2->val) && isSym(root1->left, root2->right) && isSym(root1->right, root2->left);
+    }
+    bool isSymmetric(TreeNode* root) {
+        return isSym(root->left, root->right);
+    }
+};
+```
+
+
+
+#### 543.二叉树的直径
+
+> 求左右子树深度之和最长的结点
+
+```c++
+class Solution {
+public:
+    int ans = 0;
+    int dfs(TreeNode* root) {    // 自底向上计算每个结点高度
+        if(root == nullptr) {
+            return -1;
+        }
+        int maxL = dfs(root->left);
+        int maxR = dfs(root->right);
+        ans = max(maxL + maxR + 2, ans);    // 得到左右高度后直接更新答案
+        return max(maxL, maxR) + 1;
+    }
+    int diameterOfBinaryTree(TreeNode* root) {  
+        dfs(root);
+        return ans;
+    }
+};
+```
+
+
+
+#### 102. 二叉树的层序遍历
+
+> queue康复训练
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> ans;
+        if (!root) return ans;  // 检查空树
+        
+        queue<TreeNode*> q;
+        q.push(root);
+        while(q.size()) {       // 队列非空时执行
+            vector<int> tmp;    // 存放本层的所有结点
+            int n = q.size();   // 本层结点个数
+            while(n--) {        // 一次性弹出本层所有节点
+                TreeNode* cur = q.front();
+                q.pop();
+                tmp.push_back(cur->val);
+                if(cur->left) q.push(cur->left);
+                if(cur->right) q.push(cur->right);
+            }
+            ans.push_back(tmp);
+        }
+        return ans;
+    }
+};
+```
 
 
 
