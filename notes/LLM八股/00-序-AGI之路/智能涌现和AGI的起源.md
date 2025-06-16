@@ -104,13 +104,7 @@ OpenAI一开始也没有想到可以用decoder做语言模型,只是在探索过
 [5] [Bert](https://arxiv.org/pdf/1810.04805)
 
 [6] [GPT-2](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
- 
+
 [7] [GPT-3](https://arxiv.org/pdf/2005.14165)
 
 [8] [36k:Transformer论文「重磅更新」，八子全部离职](https://36kr.com/p/2372013517760776)
-
-## 欢迎关注我的GitHub和微信公众号，来不及解释了，快上船！
-
-[GitHub: LLMForEverybody](https://github.com/luhengshiwo/LLMForEverybody)
-
-仓库上有原始的Markdown文件，完全开源，欢迎大家Star和Fork！

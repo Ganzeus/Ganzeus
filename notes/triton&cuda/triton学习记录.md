@@ -1175,7 +1175,7 @@ def unroll(X, K, stride=1):
 
 > C = matmul(A, dequantize(B, scales, zeros))
 
-1. 在外部量化(计算scale/zero_point, q = int(r/s + z)+bitpacking完成后，将q, s, z传入kernel
+1. 在外部量化(计算scale/zero_point, q = int(r/s + z) + bitpack完成后，将q, s, z传入kernel
 2. kernel内部:
    1. load
    2. unpack+dequantize(dq = s(q-z))
