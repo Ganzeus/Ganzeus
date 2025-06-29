@@ -48,6 +48,7 @@ void Dijkstra(int s) {   //s为起点
         }
         if(u == -1) return;	//找不到小于INF的d[u], 说明剩下的顶点与起点s都不连通
         vis[u] = true;		//标记u已访问
+        // 更新u的所有邻接点的d(距起点s的最短路)
         for(int v = 0; v < n; v++){ //遍历所有顶点
             if(!vis[v] && G[u][v] != INF){
                 if(d[u] + G[u][v] < d[v]){

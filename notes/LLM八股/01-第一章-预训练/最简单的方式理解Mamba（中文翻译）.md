@@ -247,9 +247,3 @@ Gu 和 Dao 在涉及语言、基因组学和音频的一系列序列建模任务
 [1] [MODELING SEQUENCES WITH STRUCTURED STATE SPACES](https://stacks.stanford.edu/file/druid:mb976vf9362/gu_dissertation-augmented.pdf)
 
 [2] [Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/pdf/2312.00752)
-
-## 欢迎关注我的GitHub和微信公众号，来不及解释了，快上船！
-
-[GitHub: LLMForEverybody](https://github.com/luhengshiwo/LLMForEverybody)
-
-仓库上有原始的Markdown文件，完全开源，欢迎大家Star和Fork！

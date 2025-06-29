@@ -889,7 +889,7 @@ def transpose_kernel(
     offs_col = pid_n * bn + tl.arange(0, bn)
 
     # offs_X = offs_col[None, :] * col_stride_x + offs_row[:, None] * row_stride_x
-    offs_X_trans = offs_col[:, None] * col_stride_x + offs_row[None, :] * row_stride_x      # 调换行列顺序即可转置！
+    offs_X_trans = offs_col[:, None] * col_stride_x + offs_row[None, :] * row_stride_x       # 调换行列顺序即可转置！
     # mask_X_trans = (offs_col[:, None] < N) & (offs_row[None, :] < M)
 
 
