@@ -10,7 +10,7 @@
 
 ### MOE(Mixture of Experts)
 
-![image-20250317140218250](./../../../img/typora-user-images/image-20250317140218250.png)
+![image-20250317140218250](./../../img/typora-user-images/image-20250317140218250.png)
 
 + 将整个Feed-forward Network分为多个小FFN, 每个小FFN称为一个expert。根据不同的输入选择不同的小FFN激活。
 + 如何决定该激活哪个FFN？
@@ -21,7 +21,7 @@
 
 ### HuggingFace模型权重文件解析
 
-<img src="./../../../img/typora-user-images/image-20250521171410439.png" alt="image-20250521171410439" style="zoom: 33%;" /> 
+<img src="./../../img/typora-user-images/image-20250521171410439.png" alt="image-20250521171410439" style="zoom: 33%;" /> 
 
 + `config.json`模型配置文件：
   	存储模型结构（transformer具体结构）、超参数（网络层数、隐藏层维度，attention head数）、vocab_size、激活函数类型、weight初始化逻辑等等，用于加载和构建模型架构。
@@ -316,7 +316,7 @@
 > + 而$R^{-1}(\theta)=R(-\theta)$即旋转矩阵的逆矩阵相当于反转（顺时针）
 > + 因此**$R^T(\theta)=R(-\theta)$**
 
- <img src="./../../../img/typora-user-images/image-20250306002734160.png" alt="image-20250306002734160" style="zoom: 33%;" />
+ <img src="./../../img/typora-user-images/image-20250306002734160.png" alt="image-20250306002734160" style="zoom: 33%;" />
 
 + "dog"在句子中第几个位置就旋转几个$\theta$,乘上对应的旋转矩阵
 
@@ -329,22 +329,22 @@ $$
 
 #### 拓展到n维
 
-![image-20250306154055533](./../../../img/typora-user-images/image-20250306154055533.png)
+![image-20250306154055533](./../../img/typora-user-images/image-20250306154055533.png)
 
 + embedding维度分组，每组2维
 + 每组分配的$\theta$不同, 从而旋转速度也不同
-  <img src="./../../../img/typora-user-images/image-20250306155052913.png" alt="image-20250306155052913" style="zoom:33%;" />
+  <img src="./../../img/typora-user-images/image-20250306155052913.png" alt="image-20250306155052913" style="zoom:33%;" />
 
 #### RoPE乘法优化
 
 上述R矩阵非常稀疏，直接做乘法非常耗时，因此有如下优化：
-![image-20250306154356289](./../../../img/typora-user-images/image-20250306154356289.png)
+![image-20250306154356289](./../../img/typora-user-images/image-20250306154356289.png)
 
 
 
 #### RoPE计算流程
 
-![image-20250306154613015](./../../../img/typora-user-images/image-20250306154613015.png)
+![image-20250306154613015](./../../img/typora-user-images/image-20250306154613015.png)
 
 1. 计算$Q=W_qX, K=W_kX$
 2. 将Q和K中的元素两两一组应用旋转变换
@@ -490,7 +490,7 @@ KV Cache 的核心是缓存之前计算的键（keys）和值（values），避�
 
 >  [How DeepSeek Rewrote the Transformer](https://youtu.be/0VLAoVGf_74?t=573)
 
-![image-20250316155614468](./../../../img/typora-user-images/image-20250316155614468.png)
+![image-20250316155614468](./../../img/typora-user-images/image-20250316155614468.png)
 
 如图，
 
@@ -506,13 +506,13 @@ KV Cache 的核心是缓存之前计算的键（keys）和值（values），避�
 
 > [How DeepSeek Rewrote the Transformer](https://youtu.be/0VLAoVGf_74?t=573)
 
-![image-20250306144713244](./../../../img/typora-user-images/image-20250306144713244.png)
+![image-20250306144713244](./../../img/typora-user-images/image-20250306144713244.png)
 
 
 
 #### 一、MHA(Multi-Head Attention)
 
-![image-20250316163222256](./../../../img/typora-user-images/image-20250316163222256.png)
+![image-20250316163222256](./../../img/typora-user-images/image-20250316163222256.png)
 
 伪代码：
 ```python
@@ -537,7 +537,7 @@ K_heads = [K[:, h*D_H:(h+1)*D_H] for h in range(H)]
 
 #### 二、MQA(Multi-Query Attention)
 
-![image-20250316162952266](./../../../img/typora-user-images/image-20250316162952266.png)
+![image-20250316162952266](./../../img/typora-user-images/image-20250316162952266.png)
 
 伪代码：
 
@@ -560,7 +560,7 @@ return O
 
 #### 三、GQA(Grouped Query Attention)
 
-![image-20250316163255768](./../../../img/typora-user-images/image-20250316163255768.png)
+![image-20250316163255768](./../../img/typora-user-images/image-20250316163255768.png)
 
 伪代码：
 
@@ -584,10 +584,10 @@ return O
 
 #### 四、MLA（Multi-head Latent Attention）
 
-![image-20250316160824189](./../../../img/typora-user-images/image-20250316160824189.png)
+![image-20250316160824189](./../../img/typora-user-images/image-20250316160824189.png)
 
 
-![image-20250316163420038](./../../../img/typora-user-images/image-20250316163420038.png)
+![image-20250316163420038](./../../img/typora-user-images/image-20250316163420038.png)
 
 ---------
 
@@ -599,7 +599,7 @@ return O
 
 ——频繁的IO操作
 
-![image-20250228194016662](./../../../img/typora-user-images/image-20250228194016662.png)
+![image-20250228194016662](./../../img/typora-user-images/image-20250228194016662.png)
 
 + Load/Write时间比matmul还长
 
@@ -614,13 +614,13 @@ return O
 
 ##### 一、分块（Tiling）
 
-Matmul Tiling![image-20250217161038436](./../../../img/typora-user-images/image-20250217161038436.png)
+Matmul Tiling![image-20250217161038436](./../../img/typora-user-images/image-20250217161038436.png)
 
 
 
 Softmax Tiling
 
-![image-20250216153151289](./../../../img/typora-user-images/image-20250216153151289.png)
+![image-20250216153151289](./../../img/typora-user-images/image-20250216153151289.png)
 
 + 把A分成两个小矩阵A1、A2，接着分别对其做softmax，乘上各自的系数最后拼接，保证结果与softmax(A)相同。
 + 乘系数是因为两个小softmax的分母和大softmax不同
@@ -631,7 +631,52 @@ Softmax Tiling
 
 ——即不存放中间结果，在backward时重新计算（重新计算比R/W中间结果更快）
 
-![image-20250217160759278](./../../../img/typora-user-images/image-20250217160759278.png)
+![image-20250217160759278](./../../img/typora-user-images/image-20250217160759278.png)
+
+**内存优化效果**
+
+- **标准实现**：需要存储 $P \in \mathbb{R}^{B \times H \times N \times N}$
+- **Flash Attention**：只需要存储 $L, M \in \mathbb{R}^{B \times H \times N}$，在反向传播时重新计算 $P$
+
+**空间复杂度从 $O(N^2)$ 降低到 $O(N)$，但时间复杂度保持 $O(N^2)$**
+
+> ### 完整反向传播流程
+>
+> #### 1. 重新计算注意力矩阵
+>
+> $S = QK^T$
+> $S^{\text{stable}} = S - M$ （使用保存的行最大值，广播到每一行）
+> $P = \frac{\exp(S^{\text{stable}})}{\exp(L)}$ （使用保存的log-sum-exp，广播到每一行）
+>
+> #### 2. 计算 $\frac{\partial \text{Loss}}{\partial V}$
+>
+> $\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}$
+>
+> #### 3. 计算 $\frac{\partial \text{Loss}}{\partial P}$
+>
+> $\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T$
+>
+> #### 4. 计算中间变量 $D$
+>
+> $D = \text{rowsum}\left(\frac{\partial \text{Loss}}{\partial P} \odot P\right) \in \mathbb{R}^{B \times H \times N}$
+>
+> 每一行是该行所有元素的求和：$D_i = \sum_{j=1}^{N} \frac{\partial \text{Loss}}{\partial P_{ij}} \cdot P_{ij}$
+>
+> #### 5. 计算 $\frac{\partial \text{Loss}}{\partial S}$
+>
+> $\frac{\partial \text{Loss}}{\partial S} = P \odot \left(\frac{\partial \text{Loss}}{\partial P} - D\right)$
+>
+> 其中 $D$ 需要广播到每一列。
+>
+> #### 6. 计算 $\frac{\partial \text{Loss}}{\partial Q}$
+>
+> $\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K$
+>
+> #### 7. 计算 $\frac{\partial \text{Loss}}{\partial K}$
+>
+> $\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q$
+
+
 
 
 
@@ -639,13 +684,13 @@ Softmax Tiling
 
 ##### 从Safe Softmax到Online Softmax
 
-![image-20250228195723508](./../../../img/typora-user-images/image-20250228195723508.png)
+![image-20250630032649120](./../../img/typora-user-images/image-20250630032649120.png)
 
 
 
 ##### Flash Attention
 
-![image-20250228195417592](./../../../img/typora-user-images/image-20250228195417592.png)
+![image-20250228195417592](./../../img/typora-user-images/image-20250228195417592.png)
 
  
 
@@ -655,9 +700,10 @@ Softmax Tiling
 
 ##### FlashAttention-1
 
-![image-20250516171422928](./../../../img/typora-user-images/image-20250516171422928.png)
+![image-20250516171422928](./../../img/typora-user-images/image-20250516171422928.png)
 
 ##### FlashAttention-2
 
-![image-20250516171549290](./../../../img/typora-user-images/image-20250516171549290.png)
+![image-20250516171549290](./../../img/typora-user-images/image-20250516171549290.png)
 
+![image-20250630032143896](./../../img/typora-user-images/image-20250630032143896.png)

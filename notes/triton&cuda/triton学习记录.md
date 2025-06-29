@@ -1187,6 +1187,7 @@ def unroll(X, K, stride=1):
 ![image-20241213012333898](./../../img/typora-user-images/image-20241213012333898.png)
 
 + Split-K指在K维也分块并行化(而不是在一个kernel中用for循环), 适用于K维很大, 单个kernel内部存不下的情况
++ K维也并行计算提高了并行度，提升吞吐量，但内存开销更大
 
 区别：
 
@@ -1205,4 +1206,85 @@ def unroll(X, K, stride=1):
 
 ![image-20250516171643498](./../../img/typora-user-images/image-20250516171643498.png)
 
-#### helper function
+#### 手算推导
+
+![image-20250630032115672](./../../img/typora-user-images/image-20250630032115672.png)
+
+#### forward
+
+> 输入:Q、K、V
+>
+> 计算: 
+>
+> + $S = QK^T$
+>
+> + $M = rowmax(S)$ 即S的每行最大值
+>
+> + $S_{\text{stable}} = S - M$
+>
+> + $P=softmax(S_{stable})$
+>
+> + $L = \ln\left(\sum \exp(S_{\text{stable}})\right) + M$ 
+>
+>     $(= \ln\left(\sum \exp(S-M)\right) + M=\ln\left(\sum \exp S \cdot exp(-M)\right) + M = \ln\left(\sum \exp S\right) -M + M=\ln\left(\sum \exp S\right))$
+>
+> + $O = PV$
+>
+> 输出: O
+
+
+
+
+
+#### backward
+
+> 输入:$dO=\frac{\partial \text{Loss}}{\partial O}$, Q、K、V
+>
+> 计算：
+>
+> naive版:(需要$P \in \mathbb{R}^{B \times H \times N \times N}$)
+>
+> + $dV=\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}=P^T dO$
+> + $dP=\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T= dO\cdot V^T$
+> + $dS=\frac{\partial \text{Loss}}{\partial S} = P \odot \left(\frac{\partial \text{Loss}}{\partial P} - \text{diag}\left(P \cdot \frac{\partial \text{Loss}}{\partial P} \mathbf{1}\right)\right)$,其中 $\odot$ 表示逐元素乘法，$\mathbf{1}$ 是全1向量。
+> + $dQ=\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K= dS\cdot K$
+> + $dK=\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q= (dS)^T Q$
+>
+> flash attention版: (只需要forward中算出的$L =\ln\left(\sum \exp S\right)\in \mathbb{R}^{B \times H \times N}$ (log-sum-exp) )
+>
+> 1. 用L算出P
+>
+>    + $S = QK^T$
+>    + $P = \exp(S - L)$
+>
+> 2. 计算dV: $\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}$
+>
+> 3. 计算dP: $\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T$
+>
+> 4. 计算中间变量 $D = \text{rowsum}\left(\frac{\partial \text{Loss}}{\partial P} \odot P\right) \in \mathbb{R}^{B \times H \times N}$,
+>
+>    每一行是该行所有元素的求和：$D_i = \sum_{j=1}^{N} \frac{\partial \text{Loss}}{\partial P_{ij}} \cdot P_{ij}$
+>
+> 5. 计算dS: $\frac{\partial \text{Loss}}{\partial S} = P \odot \left(\frac{\partial \text{Loss}}{\partial P} - D\right)$，其中 $D$ 需要广播到每一列。
+>
+> 6. 计算dQ: $\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K$
+>
+> 7. 计算dK: $\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q$
+
+**内存优化效果**
+
+- **标准实现**：需要存储 $P \in \mathbb{R}^{B \times H \times N \times N}$
+- **Flash Attention**：只需要存储 $L, M \in \mathbb{R}^{B \times H \times N}$，在反向传播时重新计算 $P$
+
+空间复杂度从 $O(N^2)$ 降低到 $O(N)$，但时间复杂度保持 $O(N^2)$。
+
+
+
+
+
+
+
+
+
+
+
