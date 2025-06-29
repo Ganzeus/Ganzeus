@@ -636,45 +636,30 @@ Softmax Tiling
 **内存优化效果**
 
 - **标准实现**：需要存储 $P \in \mathbb{R}^{B \times H \times N \times N}$
-- **Flash Attention**：只需要存储 $L, M \in \mathbb{R}^{B \times H \times N}$，在反向传播时重新计算 $P$
+- **Flash Attention**：只需要存储 $L=\ln\left(\sum \exp S\right)\in \mathbb{R}^{B \times H \times N}$，在反向传播时通过L算出 $P$
 
 **空间复杂度从 $O(N^2)$ 降低到 $O(N)$，但时间复杂度保持 $O(N^2)$**
 
 > ### 完整反向传播流程
 >
-> #### 1. 重新计算注意力矩阵
+> 1. 用L算出P
 >
-> $S = QK^T$
-> $S^{\text{stable}} = S - M$ （使用保存的行最大值，广播到每一行）
-> $P = \frac{\exp(S^{\text{stable}})}{\exp(L)}$ （使用保存的log-sum-exp，广播到每一行）
+>    + $S = QK^T$
+>    + $P = \exp(S - L)$
 >
-> #### 2. 计算 $\frac{\partial \text{Loss}}{\partial V}$
+> 2. 计算dV: $\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}$
 >
-> $\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}$
+> 3. 计算dP: $\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T$
 >
-> #### 3. 计算 $\frac{\partial \text{Loss}}{\partial P}$
+> 4. 计算中间变量 $D = \text{rowsum}\left(\frac{\partial \text{Loss}}{\partial P} \odot P\right) \in \mathbb{R}^{B \times H \times N}$,
 >
-> $\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T$
+>    每一行是该行所有元素的求和：$D_i = \sum_{j=1}^{N} \frac{\partial \text{Loss}}{\partial P_{ij}} \cdot P_{ij}$
 >
-> #### 4. 计算中间变量 $D$
+> 5. 计算dS: $\frac{\partial \text{Loss}}{\partial S} = P \odot \left(\frac{\partial \text{Loss}}{\partial P} - D\right)$，其中 $D$ 需要广播到每一列。
 >
-> $D = \text{rowsum}\left(\frac{\partial \text{Loss}}{\partial P} \odot P\right) \in \mathbb{R}^{B \times H \times N}$
+> 6. 计算dQ: $\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K$
 >
-> 每一行是该行所有元素的求和：$D_i = \sum_{j=1}^{N} \frac{\partial \text{Loss}}{\partial P_{ij}} \cdot P_{ij}$
->
-> #### 5. 计算 $\frac{\partial \text{Loss}}{\partial S}$
->
-> $\frac{\partial \text{Loss}}{\partial S} = P \odot \left(\frac{\partial \text{Loss}}{\partial P} - D\right)$
->
-> 其中 $D$ 需要广播到每一列。
->
-> #### 6. 计算 $\frac{\partial \text{Loss}}{\partial Q}$
->
-> $\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K$
->
-> #### 7. 计算 $\frac{\partial \text{Loss}}{\partial K}$
->
-> $\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q$
+> 7. 计算dK: $\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q$
 
 
 

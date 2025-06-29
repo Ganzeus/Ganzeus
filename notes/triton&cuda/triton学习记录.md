@@ -1210,7 +1210,17 @@ def unroll(X, K, stride=1):
 
 ![image-20250630032115672](./../../img/typora-user-images/image-20250630032115672.png)
 
-#### forward
+
+
+#### 代码
+
+##### 类定义（helper function)
+
+
+
+
+
+##### forward
 
 > 输入:Q、K、V
 >
@@ -1236,7 +1246,7 @@ def unroll(X, K, stride=1):
 
 
 
-#### backward
+##### backward
 
 > 输入:$dO=\frac{\partial \text{Loss}}{\partial O}$, Q、K、V
 >
