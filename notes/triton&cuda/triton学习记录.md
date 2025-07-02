@@ -801,6 +801,8 @@ def matmul_kernel2(
 
 ### Transpose2D-1
 
+> 读时使用正常下标，写时使用转置变换后的下标
+
 #### 图解
 
 ![image-20241112222101973](./../../img/typora-user-images/image-20241112222101973.png)
@@ -852,6 +854,8 @@ def transpose_kernel(
 ### Transpose2D-2
 
 > 利用stride改变矩阵结构的特性，直接修改内存读入逻辑即可实现转置
+>
+> 即读时直接按列优先顺序，写时再按原本的行优先顺序
 
 #### 图解
 
@@ -901,6 +905,47 @@ def transpose_kernel(
     x = tl.load(x_ptr + offs_X_trans, mask=mask)
     # print_if(x, '')
     tl.store(y_ptr + offs_Y, x, mask=mask)
+```
+
+
+
+#### `tl.make_block_ptr`
+
+> triton官方的offset计算函数，不需要手动计算下标了
+
+```python
+def transpose_kernel(
+    x_ptr,
+    y_ptr,
+    M,
+    N,
+    bm: tl.constexpr = 16,
+    bn: tl.constexpr = 16
+):
+    pid_m, pid_n = tl.program_id(0), tl.program_id(1)
+
+    # x转置的offset
+    x_block_ptr = tl.make_block_ptr(
+        base=x_ptr,                    # 输入张量的基地址
+        shape=(N, M),                  # 构造的offset形状
+        strides=(1, N),                # 转置后的stride：原(N,1) -> 现(1,N)
+        offsets=(pid_n * bn, pid_m * bm),  # 行列下标的偏移量, 即offset_row需要加上pid_n * bn
+        block_shape=(bn, bm),          # 当前块的大小
+        order=(1, 0)                   # (1,0)表示行优先
+    )
+    
+    # 输出y的offset（正常行优先）
+    y_block_ptr = tl.make_block_ptr(
+        base=y_ptr,
+        shape=(N, M),
+        strides=(M, 1),
+        offsets=(pid_n * bn, pid_m * bm),
+        block_shape=(bn, bm),
+        order=(1, 0)
+    )
+    
+    x = tl.load(x_block_ptr)
+    tl.store(y_block_ptr, x)
 ```
 
 
@@ -1215,6 +1260,10 @@ def unroll(X, K, stride=1):
 #### 代码
 
 ##### 类定义（helper function)
+
+```python
+
+```
 
 
 
