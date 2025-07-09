@@ -1249,7 +1249,11 @@ def unroll(X, K, stride=1):
 
 ### FlashAttention-V2
 
-![image-20250516171643498](./../../img/typora-user-images/image-20250516171643498.png)
+#### 论文
+
+![image-20250705014647221](./../../img/typora-user-images/image-20250705014647221.png)
+
+![image-20250705014416295](./../../img/typora-user-images/image-20250705014416295.png)
 
 #### 手算推导
 
@@ -1291,6 +1295,241 @@ def unroll(X, K, stride=1):
 >
 > 输出: O
 
+kernel 内部：
+
+1. 拿到pid_Q(Q块号), pid_head(第几个head)
+2. 计算offset(Q), 初始化m、l、O(acc)
+3. causal需要两次for循环：——(为了代码复用，不在kernel中直接for循环，而是新建一个内循环函数)
+   1. 算QK^T主对角线左边的元素（不需要mask）
+   2. 算QK^T主对角线上的元素（需要mask掉上三角部分）
+4. 内循环函数：
+   1. 设置KV的遍历范围(行号)
+   2. for循环，每次先算KV offset, 再计算l, m, acc
+
+```python
+@triton.jit
+def attention_forward_innerloop(    # 是一个普通的Triton JIT函数,用于内循环(KV分块), 不是并行计算的triton kernel
+    acc,                        # O的accumulator
+    li,
+    mi,
+    Q,                          # 传入一块Q矩阵 (不是ptr)
+    pid_Q,                      # Q块号
+    # offset_Ktrans,      # K的偏移量, 用于load K (按转置顺序)
+    # offset_V,           # V的偏移量, 用于load V
+    K_ptr, V_ptr, offset_head,  # 用于重新计算 KV的偏移量
+    head_dim: tl.constexpr,     # row_stride_KV
+    softmax_scale,              # 1 / sqrt(head_dim)
+    BLOCKSIZE_Q: tl.constexpr,
+    BLOCKSIZE_KV: tl.constexpr,
+    STAGE: tl.constexpr,        # 用于判断在主对角线的哪一侧
+    offset_Qrow: tl.constexpr,
+    offset_KVrow: tl.constexpr,
+    seq_len: tl.constexpr,
+):
+    # 设置KV的遍历范围(行号)
+    if STAGE == 1:      # causal attention的主对角线左侧
+        start, end = 0, pid_Q * BLOCKSIZE_Q
+    elif STAGE == 2:    # causal attention的主对角线部分
+        start, end = pid_Q * BLOCKSIZE_Q, (pid_Q + 1) * BLOCKSIZE_Q
+        start = tl.multiple_of(start, BLOCKSIZE_Q)  # 提示编译器start是BLOCKSIZE_Q的倍数(提升编译器效率)
+    else:               # non-causal attention
+        start, end= 0, seq_len
+
+    # for循环进入真正的计算
+    for row_start in range(start, end, BLOCKSIZE_KV):
+        row_start = tl.multiple_of(row_start, BLOCKSIZE_KV)  # 提示编译器row_start是BLOCKSIZE_KV的倍数
+        # 重新计算KV偏移量
+        offset_KVrow = row_start + tl.arange(0, BLOCKSIZE_KV)   # 行下标从row_start开始
+        offset_KVcol = tl.arange(0, head_dim)
+        
+        offset_K_trans = offset_KVrow[None, :] * head_dim + offset_KVcol[:, None] * 1     # (head_dim, BLOCKSIZE_KV)
+        offset_V = offset_KVrow[:, None] * head_dim + offset_KVcol[None, :] * 1     # (BLOCKSIZE_KV, head_dim)
+        # 如果是用make_block_ptr得到的offset, 需要用tl.advance来调整偏移量
+        # offset_Ktrans = tl.advance(offset_Ktrans, (0, row_start))     # 列下标加上row_start
+        # offset_V = tl.advance(offset_V, (row_start, 0))               # 行下标加上row_start
+        
+        # load KV
+        load_mask = offset_KVrow < seq_len      # 只需要考虑行会不会越界，列数固定为 head_dim不存在越界 
+        K_t = tl.load(K_ptr + offset_head + offset_K_trans, mask=load_mask[None, :])    # mask会自动广播
+        V = tl.load(V_ptr + offset_head + offset_V, mask=load_mask[:, None])
+
+        # 计算
+        S = tl.dot(Q, K_t, allow_tf32=True) * softmax_scale  # (BLOCKSIZE_Q, BLOCKSIZE_KV) —— 不一定是正方形！
+        
+        if STAGE == 2:  # 主对角线需要设置mask, 屏蔽上三角
+            mask = offset_Qrow[:, None] >= offset_KVrow[None, :]  # Q行<K列部分(即上三角)置0
+            S += tl.where(mask, 0, -1.0e6)      # 需要屏蔽的位置置为 -inf
+            mi_new = tl.maximum(mi, tl.max(S, axis=1))     # 更新rowmax(S)
+            S -= mi_new[:, None]  # 减去每行的最大值
+        else:
+            mi_new = tl.maximum(mi, tl.max(S, axis=1))  # 更新rowmax(S)
+            S -= mi_new[:, None]  # 减去每行的最大值
+
+        P = tl.math.exp(S)  # softmax
+        li_new = tl.sum(P, axis=1)     # rowsum(P)
+
+        alpha = tl.math.exp(mi - mi_new)    # 更新S最大值后需要修改之前计算的 l和 O(softmax分母和分子)
+                                            # 将之前的 l和 O乘上 alpha即可
+        li = li*alpha + li_new
+        acc = acc * alpha[:, None]
+        acc += tl.dot(P.to(tl.float16), V)
+
+        mi = mi_new                 # 最后再赋值
+
+    return acc, li, mi
+    
+
+@triton.jit
+def attention_forward_kernel(
+    Q_ptr, K_ptr, V_ptr, O_ptr, L_ptr,
+    softmax_scale,
+    Q_stride_batch, Q_stride_head, Q_stride_seq, Q_stride_dim,
+    K_stride_batch, K_stride_head, K_stride_seq, K_stride_dim,
+    V_stride_batch, V_stride_head, V_stride_seq, V_stride_dim,
+    O_stride_batch, O_stride_head, O_stride_seq, O_stride_dim,
+    batch_size,
+    num_heads: tl.constexpr,
+    seq_len: tl.constexpr,
+    head_dim: tl.constexpr,
+    BLOCKSIZE_Q: tl.constexpr,
+    BLOCKSIZE_KV: tl.constexpr,
+    STAGE: tl.constexpr,  # 1: normal attention, 3: causal attention
+):
+    # 1. pid
+    # 一块Q的大小为 (BLOCKSIZE_Q, head_dim), KV的列数必须<=Q的列数才能相乘
+    tl.static_assert(BLOCKSIZE_KV <=head_dim, "BLOCKSIZE_KV should be less than or equal to head_dim")
+    pid_Q = tl.program_id(0)        # Q的块号
+    pid_head = tl.program_id(1)     # head序号(一维 0 ~ batch_size*num_heads - 1)
+    
+    # 2. offset
+    offset_head = pid_head * Q_stride_head  # 当前head的偏移量
+    # 第二种写法：(更通用)
+    # head_idx = pid_head % num_heads     # head下标(二维 0 ~ num_heads - 1)
+    # batch_idx = pid_head // num_heads   # batch下标
+    # offset_head = batch_idx.to(tl.int64) * Q_stride_batch + head_idx.to(tl.int64) * Q_stride_head
+    
+    offset_Qrow = pid_Q * BLOCKSIZE_Q + tl.arange(0, BLOCKSIZE_Q)  # Q的行下标（即当前block负责Q的第几行到第几行）
+    offset_Qcol = tl.arange(0, head_dim)  # Q的列下标
+    offset_Q = offset_Qrow[:, None] * Q_stride_seq + offset_Qcol[None, :] * Q_stride_dim   # (BLOCKSIZE_Q, head_dim)矩阵
+    offset_Q += Q_ptr + offset_head  # 加上前面的偏移量，得到Q的实际地址
+    
+
+    # 行列下标(KV相同)
+    offset_KVrow = tl.arange(0, BLOCKSIZE_KV)
+    offset_KVcol = tl.arange(0, head_dim)       # 列下标QKV三者都相同
+
+    offset_V = offset_KVrow[:, None] * V_stride_seq + offset_KVcol[None, :] * V_stride_dim  # (BLOCKSIZE_KV, head_dim)
+    offset_V += V_ptr + offset_head
+    # offset_K = offset_Krow[:, None] * K_stride_seq + offset_Kcol[None, :] * K_stride_dim  # (BLOCKSIZE_KV, head_dim)
+    offset_Ktrans = offset_KVrow[None, :] * K_stride_seq + offset_KVcol[:, None] * K_stride_dim  # (head_dim, BLOCKSIZE_KV)——调换行列即可转置！！！
+    offset_Ktrans += K_ptr + offset_head
+
+    offset_Orow = pid_Q * BLOCKSIZE_Q + tl.arange(0, BLOCKSIZE_Q)
+    offset_Ocol = tl.arange(0, head_dim)
+    offset_O = offset_Orow[:, None] * O_stride_seq + offset_Ocol[None, :] * O_stride_dim  # (BLOCKSIZE_Q, head_dim)
+    offset_O += O_ptr + offset_head
+
+    # 第二种写法: 直接用triton官方的函数
+    # offset_Q = tl.make_block_ptr(
+    #     base=Q_ptr + offset_head,                   # 起始地址
+    #     shape=(seq_len, head_dim),                  # 完整 Q的形状
+    #     strides=(Q_stride_seq, Q_stride_dim),       # 行列两个维度的stride
+    #     offsets=(pid_Q * BLOCKSIZE_Q, 0),           # 行列下标的偏移量, 即offset_Qrow需要加上 pid_Q * BLOCKSIZE_Q
+    #     block_shape=(BLOCKSIZE_Q, head_dim),        # 一个Q block的形状, 即offset_Q的形状
+    #     order=(1, 0)    # (1, 0)表示第一个维度(seq_len)优先, 即行优先
+    # )
+    # offset_V = tl.make_block_ptr(
+    #     base=V_ptr + offset_head,   # 起始地址
+    #     shape=(seq_len, head_dim),  # V的形状
+    #     strides=(V_stride_seq, V_stride_dim),     # 行列两个维度的stride
+    #     offsets=(0, 0),  # 行列下标的偏移量
+    #     block_shape=(BLOCKSIZE_KV, head_dim),     # offset_V的形状
+    #     order=(1, 0)  # 行优先
+    # )
+    # offset_Ktrans = tl.make_block_ptr(
+    #     base=K_ptr + offset_head,   # 起始地址
+    #     shape=(head_dim, seq_len),  # K转置的形状
+    #     strides=(K_stride_dim, K_stride_seq),     # 转置时stride需要对调
+    #     offsets=(0, 0),  # 行列下标的偏移量
+    #     block_shape=(BLOCKSIZE_KV, head_dim),     # offset_Ktrans的形状
+    #     order=(0, 1)  # 列优先
+    # )
+    # offset_O = tl.make_block_ptr(
+    #     base=O_ptr + offset_head,  # 起始地址
+    #     shape=(seq_len, head_dim),
+    #     strides=(O_stride_seq, O_stride_dim),
+    #     offsets=(pid_Q * BLOCKSIZE_Q, 0),
+    #     block_shape=(BLOCKSIZE_Q, head_dim),        # offset_O的形状
+    #     order=(1, 0),
+    # )
+
+    # 3. 开始计算
+    # 初始化
+    mi = tl.zeros([BLOCKSIZE_Q], dtype=tl.float32) - float('inf')   # m: QK^T的最大值构成的列向量, 初始化为负无穷
+    li = tl.zeros([BLOCKSIZE_Q], dtype=tl.float32) + 1.0            # l: exp(QK^T - m)的每行之和构成的列向量, 即softmax分母. 初始化为 1是为了数值稳定, 不影响结果
+    acc = tl.zeros([BLOCKSIZE_Q, head_dim], dtype=tl.float32)       # acc: QK^T的累加和, 即O的值
+
+    load_Q_mask = offset_Qrow < seq_len
+    Q = tl.load(offset_Q, mask=load_Q_mask[:, None])       # load Q
+    # 不在此处用for循环,而是新建一个函数实现同样的操作(为了代码复用与美观)
+    
+    # causal attention的stage==3, 需要分两步. 而non-causal attention只需要一步
+    if STAGE == 1 or STAGE == 3:
+        # 1. 当前 Q块与之前的 KV块计算  (即第i块Q与第0~i-1块K,V计算), 不需要mask屏蔽上三角部分  ——算的是完整QK^T的主对角线左侧
+        acc, li, mi = attention_forward_innerloop(
+            acc,
+            li,
+            mi,
+            Q,
+            pid_Q,
+            # offset_Ktrans,
+            # offset_V,
+            K_ptr, V_ptr, offset_head,  # 用于重新计算 KV的偏移量
+            head_dim,
+            softmax_scale,
+            BLOCKSIZE_Q,
+            BLOCKSIZE_KV,
+            4 - STAGE,          # 用于判断在主对角线的哪一侧
+            offset_Qrow,
+            offset_KVrow,
+            seq_len,
+        )
+
+    
+    if STAGE == 3:
+        # 2. 当前Q块与当前的KV块计算, 需要mask屏蔽上三角部分 ——算的就是完整QK^T的主对角线部分
+        acc, li, mi = attention_forward_innerloop(
+            acc,
+            li,
+            mi,
+            Q,
+            pid_Q,
+            # offset_Ktrans,
+            # offset_V,
+            K_ptr, V_ptr, offset_head,  # 用于重新计算 KV的偏移量
+            head_dim,
+            softmax_scale,
+            BLOCKSIZE_Q,
+            BLOCKSIZE_KV,
+            2,                  # 2表示计算主对角线上的分块
+            offset_Qrow,
+            offset_KVrow,
+            seq_len,
+        )
+
+    # 此处算完了acc, li和 mi
+    Li = mi + tl.math.log(li)    # L = log_sum_exp(QK^T), seq_len行的列向量 (Li有BLOCKSIZE_Q行)
+    acc = acc / li[:, None]     # O除分母,完成softmax(QK^T)的计算. (l扩展至nx1矩阵,即每行除以对应的l值)
+    
+    
+    # 4. load O和 L
+    store_mask = offset_Qrow < seq_len
+    tl.store(offset_O, acc, mask=store_mask[:, None])
+    
+    offset_L = L_ptr + pid_head * seq_len + offset_Qrow
+    tl.store(offset_L, Li, mask=store_mask)
+```
+
 
 
 
@@ -1305,30 +1544,30 @@ def unroll(X, K, stride=1):
 >
 > + $dV=\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}=P^T dO$
 > + $dP=\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T= dO\cdot V^T$
-> + $dS=\frac{\partial \text{Loss}}{\partial S} = P \odot \left(\frac{\partial \text{Loss}}{\partial P} - \text{diag}\left(P \cdot \frac{\partial \text{Loss}}{\partial P} \mathbf{1}\right)\right)$,其中 $\odot$ 表示逐元素乘法，$\mathbf{1}$ 是全1向量。
+> + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dP - D\right)$, 其中$D = \text{rowsum}\left(dP \odot P\right) \in \mathbb{R}^{B \times H \times N}$, $\odot$ 为点乘
 > + $dQ=\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K= dS\cdot K$
 > + $dK=\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q= (dS)^T Q$
 >
 > flash attention版: (只需要forward中算出的$L =\ln\left(\sum \exp S\right)\in \mathbb{R}^{B \times H \times N}$ (log-sum-exp) )
 >
-> 1. 用L算出P
+> **D优化：$D = \text{rowsum}\left(dP \odot P\right) = \text{rowsum}\left(dO \odot O\right)$**
 >
->    + $S = QK^T$
->    + $P = \exp(S - L)$
->
-> 2. 计算dV: $\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}$
->
-> 3. 计算dP: $\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T$
->
-> 4. 计算中间变量 $D = \text{rowsum}\left(\frac{\partial \text{Loss}}{\partial P} \odot P\right) \in \mathbb{R}^{B \times H \times N}$,
->
->    每一行是该行所有元素的求和：$D_i = \sum_{j=1}^{N} \frac{\partial \text{Loss}}{\partial P_{ij}} \cdot P_{ij}$
->
-> 5. 计算dS: $\frac{\partial \text{Loss}}{\partial S} = P \odot \left(\frac{\partial \text{Loss}}{\partial P} - D\right)$，其中 $D$ 需要广播到每一列。
->
-> 6. 计算dQ: $\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K$
->
-> 7. 计算dK: $\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q$
+> 1. 并行计算$D=\text{rowsum}\left(dO \odot O\right)$
+> 2. 并行计算dK和dV（固定KV块，遍历所有Q块）
+>    + $S=QK^T$
+>    + $P=exp(S-L)$
+>    + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dO·V^T - D\right)$
+>    + $dK = (dS)^T·Q$
+>    + $dV = P^T·dO$
+> 3. 并行计算dQ（固定Q块，遍历所有KV块）
+>    + $S=QK^T$
+>    + $P=exp(S-L)$
+>    + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dO·V^T - D\right)$
+>    + $dQ = dS·K$
+
+
+
+
 
 **内存优化效果**
 
@@ -1336,8 +1575,6 @@ def unroll(X, K, stride=1):
 - **Flash Attention**：只需要存储 $L, M \in \mathbb{R}^{B \times H \times N}$，在反向传播时重新计算 $P$
 
 空间复杂度从 $O(N^2)$ 降低到 $O(N)$，但时间复杂度保持 $O(N^2)$。
-
-
 
 
 

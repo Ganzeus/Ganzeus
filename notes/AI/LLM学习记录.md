@@ -681,7 +681,7 @@ Softmax Tiling
 
 
 
-#### forward pass（paper）
+#### Forward
 
 ##### FlashAttention-1
 
@@ -691,4 +691,205 @@ Softmax Tiling
 
 ![image-20250516171549290](./../../img/typora-user-images/image-20250516171549290.png)
 
+> 输入:Q、K、V
+>
+> 计算: 
+>
+> + $S = QK^T$
+>
+> + $M = rowmax(S)$ 即S的每行最大值
+>
+> + $S_{\text{stable}} = S - M$
+>
+> + $P=softmax(S_{stable})$
+>
+> + $L = \ln\left(\sum \exp(S_{\text{stable}})\right) + M$ 
+>
+>   $(= \ln\left(\sum \exp(S-M)\right) + M=\ln\left(\sum \exp S \cdot exp(-M)\right) + M = \ln\left(\sum \exp S\right) -M + M=\ln\left(\sum \exp S\right))$
+>
+> + $O = PV$
+>
+> 输出: O
+
+#### Backward
+
+![image-20250705014647221](./../../img/typora-user-images/image-20250705014647221.png)
+
+> 输入:$dO=\frac{\partial \text{Loss}}{\partial O}$, Q、K、V
+>
+> 计算：
+>
+> naive版:(需要$P \in \mathbb{R}^{B \times H \times N \times N}$)
+>
+> + $dV=\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}=P^T dO$
+> + $dP=\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T= dO\cdot V^T$
+> + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dP - D\right)$, 其中$D = \text{rowsum}\left(dP \odot P\right) \in \mathbb{R}^{B \times H \times N}$, $\odot$ 为点乘
+> + $dQ=\frac{\partial \text{Loss}}{\partial Q} = \frac{\partial \text{Loss}}{\partial S} K= dS\cdot K$
+> + $dK=\frac{\partial \text{Loss}}{\partial K} = \left(\frac{\partial \text{Loss}}{\partial S}\right)^T Q= (dS)^T Q$
+>
+> flash attention版: (只需要forward中算出的$L =\ln\left(\sum \exp S\right)\in \mathbb{R}^{B \times H \times N}$ (log-sum-exp) )
+>
+> **D优化：$D = \text{rowsum}\left(dP \odot P\right) = \text{rowsum}\left(dO \odot O\right)$**
+>
+> 1. 并行计算$D=\text{rowsum}\left(dO \odot O\right)$
+> 2. 并行计算dK和dV（固定KV块，遍历所有Q块）
+>    + $S=QK^T$
+>    + $P=exp(S-L)$
+>    + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dO·V^T - D\right)$
+>    + $dK = (dS)^T·Q$
+>    + $dV = P^T·dO$
+> 3. 并行计算dQ（固定Q块，遍历所有KV块）
+>    + $S=QK^T$
+>    + $P=exp(S-L)$
+>    + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dO·V^T - D\right)$
+>    + $dQ = dS·K$
+
+#### 伪代码
+
 ![image-20250630032143896](./../../img/typora-user-images/image-20250630032143896.png)
+
+
+
+
+
+
+
+## Python & PyTorch
+
+### static method是什么
+
+> *Thinking...*
+>
+> > 用户问的是 Python 中的 @staticmethod 装饰器，虽然他们在 PyTorch 的 autograd.Function 中看到了它，但这其实是 Python 语言的特性，不是 PyTorch 特有的。我需要解释清楚：
+> >
+> > 1. @staticmethod 是 Python 的装饰器，不是注释
+> > 2. 它的作用和用法
+> > 3. 与普通方法、类方法的区别
+> > 4. 为什么在 torch.autograd.Function 中需要使用它
+> > 5. 给出具体的例子来说明
+> >
+> > 需要纠正用户的说法：这不是"注释"，而是"装饰器"。
+>
+> `@staticmethod` 不是注释，而是 Python 的**装饰器（decorator）**，它有特定的功能和用途。
+>
+> ## 1. **@staticmethod 的作用**
+>
+> 将方法定义为**静态方法**，这意味着：
+>
+> - **不需要实例化类就能调用**
+> - **不会自动传递 `self` 或 `cls` 参数**
+> - **方法内部无法访问实例属性或类属性**
+>
+> ## 2. **三种方法类型的对比**
+>
+> ```python
+> class MyClass:
+>     class_var = "I'm a class variable"
+>     
+>     def __init__(self):
+>         self.instance_var = "I'm an instance variable"
+>     
+>     # 普通实例方法
+>     def instance_method(self):
+>         return f"Instance method: {self.instance_var}"
+>     
+>     # 类方法
+>     @classmethod
+>     def class_method(cls):
+>         return f"Class method: {cls.class_var}"
+>     
+>     # 静态方法
+>     @staticmethod
+>     def static_method(x, y):
+>         return f"Static method: {x + y}"
+> 
+> # 使用方式：
+> obj = MyClass()
+> 
+> # 实例方法：需要实例
+> print(obj.instance_method())  # ✅ 正常
+> # MyClass.instance_method()   # ❌ 错误，缺少 self
+> 
+> # 类方法：可以通过类或实例调用
+> print(MyClass.class_method())  # ✅ 正常
+> print(obj.class_method())      # ✅ 也正常
+> 
+> # 静态方法：可以通过类或实例调用，也可以直接调用
+> print(MyClass.static_method(1, 2))  # ✅ 正常
+> print(obj.static_method(1, 2))      # ✅ 也正常
+> ```
+>
+> ## 3. **在 torch.autograd.Function 中为什么用 @staticmethod**
+>
+> ```python
+> class MyFunction(torch.autograd.Function):
+>     @staticmethod
+>     def forward(ctx, x):  # 静态方法
+>         return x * 2
+>     
+>     @staticmethod
+>     def backward(ctx, grad_output):  # 静态方法
+>         return grad_output * 2
+> 
+> # PyTorch 内部调用方式：
+> # MyFunction.forward(ctx_object, tensor)  # 直接通过类调用
+> # MyFunction.backward(ctx_object, grad)   # 不需要实例
+> ```
+>
+> **为什么必须是静态方法？**
+>
+> - PyTorch 需要**直接通过类调用**这些方法，而不是通过实例
+> - 这些方法不需要访问实例状态，所有必要信息都通过参数传递
+> - 保持接口简洁，避免不必要的实例化开销
+>
+> ## 4. **如果不使用 @staticmethod 会怎样？**
+>
+> ```python
+> class BadFunction(torch.autograd.Function):
+>     # 没有 @staticmethod
+>     def forward(self, ctx, x):  # 第一个参数是 self
+>         return x * 2
+> 
+> # PyTorch 调用时会出错：
+> # BadFunction.forward(ctx, x)  # 缺少 self 参数
+> # TypeError: forward() missing 1 required positional argument: 'ctx'
+> ```
+>
+> ## 5. **静态方法的其他使用场景**
+>
+> ```python
+> class MathUtils:
+>     @staticmethod
+>     def add(a, b):
+>         return a + b
+>     
+>     @staticmethod
+>     def multiply(a, b):
+>         return a * b
+> 
+> # 可以直接使用，像普通函数一样
+> result1 = MathUtils.add(3, 4)      # 7
+> result2 = MathUtils.multiply(3, 4)  # 12
+> 
+> # 也可以通过实例调用（但没必要）
+> utils = MathUtils()
+> result3 = utils.add(3, 4)  # 7，但这样做没有意义
+> ```
+>
+> ## 6. **什么时候使用 @staticmethod**
+>
+> **适合使用的情况：**
+>
+> - 方法在逻辑上属于这个类，但不需要访问类或实例的状态
+> - 可以作为独立函数，但为了代码组织放在类中
+> - 工具方法、辅助函数
+>
+> **不适合使用的情况：**
+>
+> - 需要访问实例属性 → 用普通方法
+> - 需要访问类属性 → 用 `@classmethod`
+> - 与类没有逻辑关系 → 定义为普通函数
+>
+> ## 总结
+>
+> `@staticmethod` 是 Python 装饰器，用于创建静态方法。在 `torch.autograd.Function` 中使用它是因为 PyTorch 需要直接通过类调用 `forward` 和 `backward` 方法，而不需要实例化。这种设计让自定义梯度函数更加高效和简洁。

@@ -1,3 +1,0 @@
-,run,epoch,loss,accuracy,epoch duration,run duration,lr,batch_size,shuffle,num_workers,device,network
-0,1,1,0.9860952407121658,0.6258,14.278206825256348,19.520838737487793,0.01,1000,True,1,cpu,no_batch_norm
-1,2,1,0.5615196049213409,0.7969,14.78482460975647,20.522323608398438,0.01,1000,True,1,cpu,batch_norm
