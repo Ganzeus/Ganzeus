@@ -198,7 +198,58 @@ grid = lambda meta: (triton.cdiv(m, meta['bm']),  triton.cdiv(n, meta['bn']))
 + configs列表定义了多个配置组合，meta字典会自动从这些配置中生成
 + key参数(`['m', 'n', 'k']`)表明，每当m、n、k变化时，triton就会重新进行autotune，来确定当前数据规模的最佳配置
 
+#### num_stages和num_warps
 
+num_warps —— **空间并行(同时处理更多数据)**
+
++ 用于指定一个block**严格并行的线程数**, 即**每个block的线程数为num_warps * 32**
+
++ 1 warp = 32 threads (硬件写死), 这些线程**严格并行**执行相同的指令
+
+
+
+num_stages —— **时间并行(流水线重叠)**
+
++ 表示**流水线深度**, 表示可以同时进行多少阶段的数据加载/计算
+
+
+
+> | **对比维度**     | **num_warps**                           | **num_stages**                      |
+> | ---------------- | --------------------------------------- | ----------------------------------- |
+> | **基本定义**     | 一个thread block中包含的warp数量        | 流水线中同时进行的阶段数量          |
+> | **线程数量**     | `num_warps × 32 = 总线程数`             | 不影响线程数量                      |
+> | **并行类型**     | **空间并行** - 更多线程同时处理不同数据 | **时间并行** - 不同操作在时间上重叠 |
+> | **作用机制**     | 增加同时执行相同指令的线程数            | 加载、计算、存储操作流水线重叠      |
+> | **典型值**       | 1, 2, 4, 8 (对应32, 64, 128, 256线程)   | 1, 3, 4, 7                          |
+> | **硬件资源消耗** | 更多寄存器、shared memory               | 更多shared memory缓冲区             |
+> | **延迟隐藏**     | 通过线程级并行隐藏延迟                  | 通过操作重叠隐藏内存访问延迟        |
+> | **分支分歧影响** | 更多warp → 分支分歧影响更大             | 不直接影响分支性能                  |
+> | **内存带宽**     | 更多线程 → 更高内存带宽需求             | 通过预取提高内存带宽利用率          |
+> | **计算吞吐**     | 更多线程 → 更高计算吞吐                 | 不直接增加计算吞吐                  |
+> | **硬件要求**     | 所有GPU都支持                           | 需要异步拷贝支持(如A100的cp.async)  |
+> | **优化目标**     | 提高并行度，充分利用计算单元            | 隐藏内存延迟，提高流水线效率        |
+> | **适用场景**     | 计算密集型，数据并行性好                | 内存密集型，访问模式规律            |
+> | **占用率影响**   | 可能降低occupancy(资源限制)             | 可能降低occupancy(内存限制)         |
+> | **调试复杂度**   | 相对简单，线程数增加                    | 较复杂，涉及时序和同步              |
+> | **编译器优化**   | 影响寄存器分配和线程调度                | 影响内存访问调度和缓冲策略          |
+>
+> 
+>
+> | **场景**                   | **推荐配置**                  | **原因**                  |
+> | -------------------------- | ----------------------------- | ------------------------- |
+> | **内存密集，大BLOCK_SIZE** | `num_warps=4, num_stages=3`   | 足够并行度 + 内存延迟隐藏 |
+> | **计算密集，小BLOCK_SIZE** | `num_warps=2, num_stages=1`   | 避免资源浪费，专注计算    |
+> | **Flash Attention**        | `num_warps=4, num_stages=3-7` | 平衡计算和内存访问        |
+> | **简单元素级操作**         | `num_warps=8, num_stages=1`   | 最大化并行度              |
+>
+> 
+>
+> | **性能指标**   | **增加num_warps的影响** | **增加num_stages的影响** |
+> | -------------- | ----------------------- | ------------------------ |
+> | **计算吞吐量** | ⬆️ 显著提升              | ➡️ 基本不变               |
+> | **内存吞吐量** | ⬆️ 提升(更多并行访问)    | ⬆️ 提升(更好的流水线)     |
+> | **延迟**       | ⬇️ 可能增加(资源竞争)    | ⬇️ 显著降低               |
+> | **资源占用**   | ⬆️ 线性增加              | ⬆️ 适度增加               |
 
 ### 自定义stride改变矩阵结构
 
@@ -1266,10 +1317,139 @@ def unroll(X, K, stride=1):
 ##### 类定义（helper function)
 
 ```python
+class TritonAttention(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, Q, K, V, causal, softmax_scale):   # ctx(context)用于保存中间变量 L=log_sum_exp(QK^T)
+        # Q, K, V : (batch_size, num_heads, seq_len, head_dim) ————MHA
+        batch_size, num_heads, seq_len, head_dim = Q.shape
+        assert K.shape == (batch_size, num_heads, seq_len, head_dim), "K shape mismatch"
+        assert V.shape == (batch_size, num_heads, seq_len, head_dim), "V shape mismatch"
 
+        # 初始化输出
+        O = torch.empty_like(Q, dtype=Q.dtype, device=Q.device)
+
+        stage = 3 if causal else 1  # 如果是causal attention, 则需要分3个阶段计算, 否则只需要1个阶段
+        
+        grid = lambda meta: (       # 二维grid block, 第一维 Q按行分块, 一共有batch_size * num_heads个 head, 作为第二维
+                                    # 即每个kernel负责计算O的(1, 1, BLOCKSIZE_Q, head_dim)部分, 每个kernel都要访问完整的 K和 V(内部用循环分块读取)
+            triton.cdiv(seq_len, meta['BLOCKSIZE_Q']),
+            batch_size * num_heads
+        )
+
+        # 初始化 L(=log_sum_exp(QK^T)), seq_len行的列向量
+        # 每个kernel计算L的(1, 1, BLOCKSIZE_Q)部分
+        L = torch.empty((batch_size, num_heads, seq_len), dtype=Q.dtype, device=Q.device)
+                                    
+        attention_forward_kernel[grid](
+            Q_ptr=Q, K_ptr=K, V_ptr=V, O_ptr=O, L_ptr=L,
+            softmax_scale=softmax_scale,
+            Q_stride_batch=Q.stride(0), Q_stride_head=Q.stride(1), Q_stride_seq=Q.stride(2), Q_stride_dim=Q.stride(3),
+            K_stride_batch=K.stride(0), K_stride_head=K.stride(1), K_stride_seq=K.stride(2), K_stride_dim=K.stride(3),
+            V_stride_batch=V.stride(0), V_stride_head=V.stride(1), V_stride_seq=V.stride(2), V_stride_dim=V.stride(3),
+            O_stride_batch=O.stride(0), O_stride_head=O.stride(1), O_stride_seq=O.stride(2), O_stride_dim=O.stride(3),
+            batch_size=batch_size, num_heads=num_heads, seq_len=seq_len, head_dim=head_dim,
+            # BLOCKSIZE_Q=16, BLOCKSIZE_KV=16, 
+            STAGE=stage,
+        )
+
+        # 保存反向传播需要用到的变量
+        ctx.save_for_backward(Q, K, V, O, L)    # PyTorch内置函数, 不需要手动实现
+        ctx.grid = grid
+        ctx.causal = causal
+        ctx.softmax_scale = softmax_scale
+        ctx.head_dim = head_dim
+        
+        return O
+
+        
+    @staticmethod
+    def backward(ctx, dO):              # 输出dQ, dK, dV
+        Q, K, V, O, L = ctx.saved_tensors
+        
+        assert dO.is_contiguous()
+        assert Q.stride() == K.stride() == V.stride() == O.stride() == dO.stride()  # 形状全部相同
+        
+        # 初始化输出 (导数必须和原tensor形状相同)
+        dQ = torch.empty_like(Q)
+        dK = torch.empty_like(K)
+        dV = torch.empty_like(V)
+        
+        batch_size, num_heads, seq_len = Q.shape[:3]
+        num_warps, nums_stages = 4, 3
+        BLOCKSIZE = 128             # 并行计算的 block size(即每个 kernel负责 BLOCKSIZE行)
+        blocksize_inner = 32        # 内循环的 block size
+
+        # 1. 计算 D = rowsum(dO点乘O)
+        D = torch.empty_like(L)     # (batch_size, num_heads, seq_len)
+        # 每个kernel计算 D的 BLOCKSIZE行
+        grid_D = (seq_len // BLOCKSIZE, batch_size * num_heads)
+        
+        attn_backward_D[grid_D](
+            O_ptr=O,
+            dO_ptr=dO,
+            D_ptr=D,
+            seq_len=seq_len,
+            BLOCKSIZE=BLOCKSIZE,
+            head_dim=ctx.head_dim
+        )
+        
+        grid = (seq_len // BLOCKSIZE, 1, batch_size * num_heads)        # head放在第三维是社区约定, 以及可扩展性
+        # 计算 dQ, dK, dV的共用grid, 每个 kernel计算 BLOCKSIZE行
+        
+        stage = 3 if ctx.causal else 1
+        
+        attn_backward_dKdV[grid](       # 计算dK, dV(固定KV块, 内部for循环分块遍历完整的 Q)
+            Q_ptr=Q,
+            K_ptr=K,
+            V_ptr=V,
+            dO_ptr=dO,
+            dQ_ptr=dQ,
+            dK_ptr=dK,
+            dV_ptr=dV,
+            L_ptr=L,
+            D_ptr=D,
+            stride_batch=Q.stride(0),
+            stride_head=Q.stride(1),
+            stride_seq=Q.stride(2),
+            stride_dim=Q.stride(3),
+            softmax_scale=ctx.softmax_scale,
+            num_heads=num_heads,
+            seq_len=seq_len,
+            BLOCKSIZE_KV = BLOCKSIZE,
+            BLOCKSIZE_Q = blocksize_inner,
+            head_dim=ctx.head_dim,
+            STAGE=stage,
+            num_warps=num_warps,
+            num_stages=nums_stages,       
+        )
+        
+        attn_backward_dQ[grid](         # 计算dQ(固定Q块, 内循环遍历所有KV块)
+            Q_ptr=Q,
+            K_ptr=K,
+            V_ptr=V,
+            dO_ptr=dO,
+            dQ_ptr=dQ,
+            dK_ptr=dK,
+            dV_ptr=dV,
+            L_ptr=L,
+            D_ptr=D,
+            stride_batch=Q.stride(0),
+            stride_head=Q.stride(1),
+            stride_seq=Q.stride(2),
+            stride_dim=Q.stride(3),
+            softmax_scale=ctx.softmax_scale,
+            num_heads=num_heads,
+            seq_len=seq_len,
+            BLOCKSIZE_Q=BLOCKSIZE,
+            BLOCKSIZE_KV=blocksize_inner,
+            head_dim=ctx.head_dim,
+            STAGE=stage,
+            num_warps=num_warps,
+            num_stages=nums_stages,                         
+        )
+        
+        return dQ, dK, dV, None, None
 ```
-
-
 
 
 
@@ -1378,6 +1558,21 @@ def attention_forward_innerloop(    # 是一个普通的Triton JIT函数,用于�
 
     return acc, li, mi
     
+    
+@triton.autotune(
+    [
+        triton.Config(
+            {"BLOCKSIZE_Q": BLOCKSIZE_Q, "BLOCKSIZE_KV": BLOCKSIZE_KV},
+            num_stages=num_stages,
+            num_warps=num_warps,
+        )
+        for BLOCKSIZE_Q in [64, 128]
+        for BLOCKSIZE_KV in [32, 64]
+        for num_stages in ([3, 4, 7])
+        for num_warps in [2, 4]
+    ],
+    key=["seq_len", "head_dim"],
+)
 
 @triton.jit
 def attention_forward_kernel(
@@ -1402,7 +1597,7 @@ def attention_forward_kernel(
     pid_head = tl.program_id(1)     # head序号(一维 0 ~ batch_size*num_heads - 1)
     
     # 2. offset
-    offset_head = pid_head * Q_stride_head  # 当前head的偏移量
+    offset_head = pid_head * Q_stride_head  # 当前head的起始地址
     # 第二种写法：(更通用)
     # head_idx = pid_head % num_heads     # head下标(二维 0 ~ num_heads - 1)
     # batch_idx = pid_head // num_heads   # batch下标
@@ -1532,15 +1727,13 @@ def attention_forward_kernel(
 
 
 
-
-
 ##### backward
 
 > 输入:$dO=\frac{\partial \text{Loss}}{\partial O}$, Q、K、V
 >
 > 计算：
 >
-> naive版:(需要$P \in \mathbb{R}^{B \times H \times N \times N}$)
+> naive版:(需要$P = softmax(S) \in \mathbb{R}^{B \times H \times N \times N}$)
 >
 > + $dV=\frac{\partial \text{Loss}}{\partial V} = P^T \frac{\partial \text{Loss}}{\partial O}=P^T dO$
 > + $dP=\frac{\partial \text{Loss}}{\partial P} = \frac{\partial \text{Loss}}{\partial O} V^T= dO\cdot V^T$
@@ -1553,19 +1746,42 @@ def attention_forward_kernel(
 > **D优化：$D = \text{rowsum}\left(dP \odot P\right) = \text{rowsum}\left(dO \odot O\right)$**
 >
 > 1. 并行计算$D=\text{rowsum}\left(dO \odot O\right)$
-> 2. 并行计算dK和dV（固定KV块，遍历所有Q块）
->    + $S=QK^T$
->    + $P=exp(S-L)$
+> 2. 并行计算dK和dV（固定KV块，分块遍历完整的Q、dO、L和D）
+>    + $S=QK^T$ * softmax_scale
+>    + $P=exp(S-L), dP = dO·V^T$
 >    + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dO·V^T - D\right)$
->    + $dK = (dS)^T·Q$
+>    + $dK = (dS)^T·Q$ * softmax_scale
 >    + $dV = P^T·dO$
-> 3. 并行计算dQ（固定Q块，遍历所有KV块）
->    + $S=QK^T$
+> 3. 并行计算dQ（固定Q、dO、L和D块, 分块遍历完整KV）
+>    + $S=QK^T$ * softmax_scale
 >    + $P=exp(S-L)$
 >    + $dS = \frac{\partial \text{Loss}}{\partial S} = P \odot \left(dO·V^T - D\right)$
->    + $dQ = dS·K$
+>    + $dQ = dS·K$ * softmax_scale
+
+**dKdV kernel:**
+
+1. pid->offset->load KV
+2. 初始化dK, dv
+3. 计算dK, dV(for循环分块遍历Q、dO、L和D):        ————计算dKdV需要用到完整的Q!
+   1. load $Q^T$, 计算$P^T = (e^{QK^T-L})^T = e^{KQ^T-L}$
+   2. mask ($P^T$下三角置0)
+   3. load $dO$, 累加$dV += P^T·dO$
+   4. load $D$, 计算$dS^T = P^T\odot(dP^T-D), 其中dP^T = V·dO^T$
+   5. 累加$dK += dS^T·Q$ * softmax_scale
+4. store KV
 
 
+
+**dQ kernel**
+
+1. pid->offset->load Q、dO、L和D
+2. 初始化dQ
+3. 计算dQ(for循环分块遍历KV):
+   1. load KV, 计算$P = e^{QK^T-L}$
+   2. mask ($P$上三角置0)
+   3. 计算$dS = P\odot(dP-D), 其中dP = O·dV^T$
+   4. 累加$dQ += dS·K$ * softmax_scale
+4. store Q
 
 
 
@@ -1577,6 +1793,165 @@ def attention_forward_kernel(
 空间复杂度从 $O(N^2)$ 降低到 $O(N)$，但时间复杂度保持 $O(N^2)$。
 
 
+
+```python
+@triton.jit
+def attn_backward_D(
+    O_ptr,
+    dO_ptr,
+    D_ptr,
+    seq_len,
+    BLOCKSIZE: tl.constexpr,
+    head_dim: tl.constexpr
+):
+    # 1. pid
+    pid_O = tl.program_id(0)
+    pid_head = tl.program_id(1)
+    
+    # 2. offset
+    offset_head = pid_head * seq_len * head_dim     # 当前head的起始地址
+    offset_Orow = pid_O * BLOCKSIZE + tl.arange(0, BLOCKSIZE)   # 当前处理O的哪几行
+    offset_Ocol = tl.arange(0, head_dim)                        # 当前处理O的哪几列
+    
+    offset_O = offset_Orow[:, None] * head_dim + offset_Ocol[None, :] * 1   # (BLOCKSIZE, head_dim)
+    # offset_dO = offset_O
+    
+    # 3. load   (BLOCKSIZE, head_dim)
+    O = tl.load(O_ptr + offset_head + offset_O)
+    dO = tl.load(dO_ptr + offset_head + offset_O).to(tl.float32)
+    
+    # 4. 计算
+    D = tl.sum(dO * O, axis=1)      # (BLOCKSIZE, 1) ——点乘就是*
+    
+    # 5. store
+    tl.store(D_ptr + pid_head * seq_len + offset_Orow, D)
+    
+
+@triton.jit
+def attn_backward_dKdV(     # 每个kernel负责一块KV, for循环分块遍历完整的 Q、dO、 L和 D
+    Q_ptr, K_ptr, V_ptr,                # (batch_size, num_heads, seq_len, head_dim)
+    dO_ptr, dQ_ptr, dK_ptr, dV_ptr,     # (batch_size, num_heads, seq_len, head_dim)
+    L_ptr, D_ptr,                       # (batch_size, num_heads, seq_len)
+    stride_batch, stride_head, stride_seq, stride_dim,
+    softmax_scale,
+    num_heads,
+    seq_len,
+    BLOCKSIZE_KV: tl.constexpr,
+    BLOCKSIZE_Q: tl.constexpr,
+    head_dim: tl.constexpr,
+    STAGE: tl.constexpr,        # 1: normal attention, 3: causal attention
+):
+    # 1. pid
+    pid_head = tl.program_id(2)     # head序号(一维 0 ~ batch_size*num_heads - 1)
+    pid_KV = tl.program_id(0)        # KV的块号
+    
+    # 2. offset
+    offset_head = (pid_head * stride_head).to(tl.int64)     # 转 int64防止溢出
+    offset_KVrow = pid_KV * BLOCKSIZE_KV + tl.arange(0, BLOCKSIZE_KV)  # 当前 KV块的行下标范围
+    offset_col = tl.arange(0, head_dim)                     # 列范围
+    offset_KV = offset_KVrow[:, None] * stride_seq + offset_col[None, :] * stride_dim  # (BLOCKSIZE_KV, head_dim)
+    
+    # load K和 V
+    K = tl.load(K_ptr + offset_head + offset_KV)        # (BLOCKSIZE_KV, head_dim)
+    V = tl.load(V_ptr + offset_head + offset_KV)        # (BLOCKSIZE_KV, head_dim)
+   
+	# 初始化dK,dV
+    dK = tl.zeros([BLOCKSIZE_KV, head_dim], dtype=tl.float32)  # (BLOCKSIZE_KV, head_dim)
+    dV = tl.zeros([BLOCKSIZE_KV, head_dim], dtype=tl.float32)  # (BLOCKSIZE_KV, head_dim)
+    
+    # 3. 计算dK和 dV (for循环分块遍历 Q, dO, L和D)
+    for Qstart in range(0, seq_len, BLOCKSIZE_Q):
+        offset_Qrow = Qstart + tl.arange(0, BLOCKSIZE_Q)    # 当前Q块的行下标范围
+        offset_Qtrans = offset_Qrow[None, :] * stride_seq + offset_col[:, None] * stride_dim  # 访问Q转置而不是Q, 因为 P^T=exp(KQ^T - L)
+        offset_dO     = offset_Qrow[:, None] * stride_seq + offset_col[None, :] * stride_dim  # (BLOCKSIZE_Q, head_dim)
+
+        # load Q^T和L, 计算P^T
+        Q_trans = tl.load(Q_ptr + offset_head + offset_Qtrans)  # (head_dim, BLOCKSIZE_Q)
+        L = tl.load(L_ptr + pid_head * seq_len + offset_Qrow)  # (BLOCKSIZE_Q,)
+        S_T = tl.dot(K, Q_trans) * softmax_scale            # S^T = (QK^T)^T = K·Q^T
+        P_T = tl.math.exp(S_T - L[None, :])  # (BLOCKSIZE_KV, BLOCKSIZE_Q)   P^T=exp(KQ^T - L)
+        
+        if STAGE == 3:      # causal attention需要mask屏蔽 P的上三角, 即P^T的下三角
+            mask = offset_Qrow[None, :] >= offset_KVrow[:, None]    # 列>行部分为true, 即上三角为 true, 下三角为 false
+            P_T = tl.where(mask, P_T, 0.0)  # mask == true时返回P_T, 即保留上三角, 下三角置0 (不是置-inf, 因为P已经经过了softmax)
+            
+        # load dO, 累加计算dV = P^T·dO
+        dO = tl.load(dO_ptr + offset_head + offset_dO)  # (BLOCKSIZE_Q, head_dim)
+        dV += tl.dot(P_T.to(tl.float16), dO)  # (BLOCKSIZE_KV, head_dim)
+        
+        # load D, 计算dS(直接算dS^T)
+        D = tl.load(D_ptr + pid_head * seq_len + offset_Qrow)  # (BLOCKSIZE_Q,)
+        dP_T = tl.dot(V, tl.trans(dO)).to(tl.float32)           # dP^T = (dO·V^T)^T = V·dO^T
+        dS_T = P_T * (dP_T - D[None, :])
+        dS_T = dS_T.to(tl.float16)
+        
+        # 累加计算dK = dS_T·Q
+        dK += tl.dot(dS_T, tl.trans(Q_trans)) * softmax_scale
+        
+    # 4. store dK和 dV
+    tl.store(dK_ptr + offset_head + offset_KV, dK)
+    tl.store(dV_ptr + offset_head + offset_KV, dV)
+        
+@triton.jit  
+def attn_backward_dQ(       # 每个kernel负责一块Q/dO/L/D, for循环分块遍历 KV
+    Q_ptr, K_ptr, V_ptr,                # (batch_size, num_heads, seq_len, head_dim)
+    dO_ptr, dQ_ptr, dK_ptr, dV_ptr,     # (batch_size, num_heads, seq_len, head_dim)
+    L_ptr, D_ptr,                       # (batch_size, num_heads, seq_len)
+    stride_batch, stride_head, stride_seq, stride_dim,
+    softmax_scale,
+    num_heads,
+    seq_len,
+    BLOCKSIZE_Q: tl.constexpr,
+    BLOCKSIZE_KV: tl.constexpr,
+    head_dim: tl.constexpr,
+    STAGE: tl.constexpr,        # 1: normal attention, 3: causal attention
+):
+    # 1. pid
+    pid_head = tl.program_id(2)     # head序号(一维 0 ~ batch_size*num_heads - 1)
+    pid_Q = tl.program_id(0)        # Q的块号
+    
+    # 2. offset
+    offset_head = (pid_head * stride_head).to(tl.int64)     # 转 int64防止溢出
+    offset_Qrow = pid_Q * BLOCKSIZE_Q + tl.arange(0, BLOCKSIZE_Q)   # 当前 Q块的行下标范围
+    offset_col = tl.arange(0, head_dim)                     # 列范围
+    offset_Q = offset_Qrow[:, None] * stride_seq + offset_col[None, :] * stride_dim  # (BLOCKSIZE_Q, head_dim)
+    
+    # 3. load Q, dO, L和D
+    Q = tl.load(Q_ptr + offset_head + offset_Q)
+    dO = tl.load(dO_ptr + offset_head + offset_Q)  # (BLOCKSIZE_Q, head_dim)
+    L = tl.load(L_ptr + pid_head * seq_len + offset_Qrow)  # (BLOCKSIZE_Q,)
+    D = tl.load(D_ptr + pid_head * seq_len + offset_Qrow)  # (BLOCKSIZE_Q,)
+    
+    # 初始化dQ
+    dQ = tl.zeros([BLOCKSIZE_Q, head_dim], dtype=tl.float32)
+    
+    # 4. 计算dQ (for循环分块遍历 KV)
+    for KVstart in range(0, seq_len, BLOCKSIZE_KV):
+        offset_KVrow = KVstart + tl.arange(0, BLOCKSIZE_KV)    # 当前KV块的行下标范围
+        offset_KVtrans = offset_KVrow[None, :] * stride_seq + offset_col[:, None] * stride_dim  # 直接访问K^T和V^T
+        
+        # load KV(转置)
+        K_T = tl.load(K_ptr + offset_head + offset_KVtrans)  # (head_dim, BLOCKSIZE_KV)
+        V_T = tl.load(V_ptr + offset_head + offset_KVtrans)  # (head_dim, BLOCKSIZE_KV)
+        
+        S = tl.dot(Q, K_T) * softmax_scale      # (BLOCKSIZE_Q, BLOCKSIZE_KV)
+        P = tl.math.exp(S - L[:, None])         # P = exp(S- L)
+        
+        if STAGE == 3:      # causal attention需要mask屏蔽 P的上三角
+            mask = offset_Qrow[:, None] >= offset_KVrow[None, :]    # 行>列部分即下三角为 true
+            P = tl.where(mask, P, 0.0)  # mask == true时返回P, 即保留下三角, 上三角置0 (不是置-inf, 因为P已经经过了softmax)
+
+        # 计算dS = P * (dP - D)
+        dP = tl.dot(dO, V_T).to(tl.float32)     # dP = dO·V^T
+        dS = P * (dP - D[:, None])              # (BLOCKSIZE_Q, BLOCKSIZE_KV)
+        dS = dS.to(tl.float16)
+        
+        # 累加计算dQ = dS·K * sm_scale
+        dQ += tl.dot(dS, tl.trans(K_T)) * softmax_scale  # (BLOCKSIZE_Q, head_dim)
+    
+    # 5. store dQ
+    tl.store(dQ_ptr + offset_head + offset_Q, dQ)
+```
 
 
 
