@@ -494,7 +494,7 @@ KV Cache 的核心是缓存之前计算的键（keys）和值（values），避�
 
 如图，
 
-+ **对于新的token，计算其attention score只需要最后一行Q**，即当前token所在的Q，之前的token完全用不到，因此没必要cache之前的Q。
++ **对于新的token，计算其attention score只需要最后一行Q**，即当前token所形成的Q，之前的token完全用不到，因此没必要cache之前的Q。
   + 而对于KV，计算新token的attention score需要用到前面所有行，因此缓存KV非常有必要
 
 
@@ -758,18 +758,6 @@ Softmax Tiling
 
 ### static method是什么
 
-> *Thinking...*
->
-> > 用户问的是 Python 中的 @staticmethod 装饰器，虽然他们在 PyTorch 的 autograd.Function 中看到了它，但这其实是 Python 语言的特性，不是 PyTorch 特有的。我需要解释清楚：
-> >
-> > 1. @staticmethod 是 Python 的装饰器，不是注释
-> > 2. 它的作用和用法
-> > 3. 与普通方法、类方法的区别
-> > 4. 为什么在 torch.autograd.Function 中需要使用它
-> > 5. 给出具体的例子来说明
-> >
-> > 需要纠正用户的说法：这不是"注释"，而是"装饰器"。
->
 > `@staticmethod` 不是注释，而是 Python 的**装饰器（decorator）**，它有特定的功能和用途。
 >
 > ## 1. **@staticmethod 的作用**
@@ -785,26 +773,26 @@ Softmax Tiling
 > ```python
 > class MyClass:
 >     class_var = "I'm a class variable"
->     
+> 
 >     def __init__(self):
->         self.instance_var = "I'm an instance variable"
->     
+>        self.instance_var = "I'm an instance variable"
+> 
 >     # 普通实例方法
 >     def instance_method(self):
->         return f"Instance method: {self.instance_var}"
->     
->     # 类方法
+>        return f"Instance method: {self.instance_var}"
+> 
+>    # 类方法
 >     @classmethod
 >     def class_method(cls):
 >         return f"Class method: {cls.class_var}"
->     
+> 
 >     # 静态方法
 >     @staticmethod
->     def static_method(x, y):
+>         def static_method(x, y):
 >         return f"Static method: {x + y}"
 > 
 > # 使用方式：
-> obj = MyClass()
+>     obj = MyClass()
 > 
 > # 实例方法：需要实例
 > print(obj.instance_method())  # ✅ 正常
@@ -826,7 +814,7 @@ Softmax Tiling
 >     @staticmethod
 >     def forward(ctx, x):  # 静态方法
 >         return x * 2
->     
+> 
 >     @staticmethod
 >     def backward(ctx, grad_output):  # 静态方法
 >         return grad_output * 2
@@ -838,7 +826,7 @@ Softmax Tiling
 >
 > **为什么必须是静态方法？**
 >
-> - PyTorch 需要**直接通过类调用**这些方法，而不是通过实例
+>     - PyTorch 需要**直接通过类调用**这些方法，而不是通过实例
 > - 这些方法不需要访问实例状态，所有必要信息都通过参数传递
 > - 保持接口简洁，避免不必要的实例化开销
 >
@@ -847,7 +835,7 @@ Softmax Tiling
 > ```python
 > class BadFunction(torch.autograd.Function):
 >     # 没有 @staticmethod
->     def forward(self, ctx, x):  # 第一个参数是 self
+>    def forward(self, ctx, x):  # 第一个参数是 self
 >         return x * 2
 > 
 > # PyTorch 调用时会出错：
@@ -862,7 +850,7 @@ Softmax Tiling
 >     @staticmethod
 >     def add(a, b):
 >         return a + b
->     
+> 
 >     @staticmethod
 >     def multiply(a, b):
 >         return a * b
@@ -893,3 +881,5 @@ Softmax Tiling
 > ## 总结
 >
 > `@staticmethod` 是 Python 装饰器，用于创建静态方法。在 `torch.autograd.Function` 中使用它是因为 PyTorch 需要直接通过类调用 `forward` 和 `backward` 方法，而不需要实例化。这种设计让自定义梯度函数更加高效和简洁。
+>
+> 

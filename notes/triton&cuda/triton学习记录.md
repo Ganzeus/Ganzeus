@@ -1475,6 +1475,8 @@ class TritonAttention(torch.autograd.Function):
 >
 > 输出: O
 
++ 每个kernel传入BLOCK_SIZE_Q行的Q，以及完整seq_len行的KV, 计算得到O的BLOCKSIZE_Q行的结果
+
 kernel 内部：
 
 1. 拿到pid_Q(Q块号), pid_head(第几个head)
@@ -1957,5 +1959,16 @@ def attn_backward_dQ(       # 每个kernel负责一块Q/dO/L/D, for循环分块�
 
 
 
+### FlashDecoding(FlashAttention-V3)
+
+#### 计算流程
+
+##### Stage 1: 计算sm(QK^T)V
+
++ 每个kernel传入一行Q和Partion_size行的KV
 
 
+
+##### Stage 2: Online Softmax
+
++ 把每个kernel的计算结果进行reduce，恢复正确的softmax结果

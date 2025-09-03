@@ -231,6 +231,18 @@ Counter({'a': 2, 'c': 1, 'b': 1, 'd': 2})
 
 ## 模板
 
+### 数学
+
+#### 质数&质因子分解
+
+
+
+#### 最大公约数GCD & 最小公倍数GCM
+
+
+
+#### 
+
 ### 二分查找
 
 ```python
@@ -340,6 +352,63 @@ def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节
         ans.append(vals)
 	return ans
             
+```
+
+
+
+
+
+#### 并查集
+
++ ==获得根结点用`findFather(i)`！！,不要用`father[i]`！==
+
+```c++
+#define N 1010
+int father[N];  // father[i] 表示i所在集合的根结点
+
+/* 初始化，每个元素都是独立的集合，根节点为自身 */
+void init() {
+    for(int i = 1; i <= N; i++)  {
+        father[i] = i;
+    }
+}
+int findFather(x) {
+    // 由于第一次循环会把x变为根结点，因此此处保存原来的x
+    int a = x;
+    // 第一次循环，找到根结点
+    while(x != father[x]) { //根结点的father为自身
+        x = father[x];
+    }
+    // 此时x为根结点
+    //第二次循环，路径压缩，将原来的x到根结点路径上所有结点的father置为根结点
+    while(a != father[a]) {
+        int b = a;      // 保存还未被修改的结点
+        a = father[a];  // 回溯a父结点
+        father[b] = x;  // 修改为根结点
+    }
+    return x;   // 返回根结点
+}
+
+/* 合并两个集合 */
+void Union(int a, int b) {
+    int faA = findFather(a);
+    int faB = findFather(b);
+    if(faA != faB){ //不属于同一集合
+        father[faA] = faB;  //合并根结点
+    }
+}
+
+/* 统计共有多少集合以及每个集合的人数 */
+int isRoot[N] = {0};      // 记录每个根结点所在集合的人数
+
+for(int i = 1; i <= N; i++) {
+        isRoot[findFather(i)]++;        // i的根结点是parent[i], 将根结点所在集合个数+1
+}
+
+int size = 0;   // 集合个数
+for(int i = 1; i <= N; i++) {
+    if(isRoot[i] != 0) size++;  // 统计个数不为0的集合
+}
 ```
 
 
