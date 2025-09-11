@@ -123,7 +123,7 @@ Counter({'a': 2, 'c': 1, 'b': 1, 'd': 2})
 
 | 容器                                  | API                                                          | 备注                                         |
 | ------------------------------------- | ------------------------------------------------------------ | -------------------------------------------- |
-| vector                                | `<vector> `                                                  |                                              |
+| vector                                | 头文件`<vector> `                                            |                                              |
 |                                       | `vector<int> num(n, 0)`（等价于`vector<int> num(n)`）<br />`vector<vector<int>> v(9, vector<int>(9, 0));` | **指定大小和默认值**                         |
 |                                       | v.push_back(val), v.pop_back()                               | 尾部插入/删除                                |
 |                                       | v.insert(it, val)                                            | 迭代器位置插入                               |
@@ -134,7 +134,7 @@ Counter({'a': 2, 'c': 1, 'b': 1, 'd': 2})
 |                                       | v.resize(n)                                                  | 重设大小                                     |
 |                                       | fill(v.begin(), v.end(), 0)                                  | **全部元素设为0**                            |
 |                                       |                                                              |                                              |
-| string                                | `<string>`                                                   |                                              |
+| string                                | 头文件`<string>`                                             |                                              |
 |                                       | s.length(), s.size()                                         | 长度                                         |
 |                                       | s.empty()                                                    | 是否为空                                     |
 |                                       | s.push_back(c), s.pop_back()                                 | **尾部增删字符**                             |
@@ -145,17 +145,19 @@ Counter({'a': 2, 'c': 1, 'b': 1, 'd': 2})
 |                                       | s.find(str), s.rfind(str)                                    | 正向/反向查找                                |
 |                                       | s.find_first_of(chars)                                       | 查找任一字符首次出现                         |
 |                                       | s.substr(pos, len)                                           | 提取子串                                     |
+|                                       | **to_string()**                                              | int->string                                  |
+|                                       | **stoi()**                                                   | string->int                                  |
 |                                       | s = s1 + s2                                                  | **字符串加法（合并）**                       |
 |                                       |                                                              |                                              |
-| deque                                 | `<deque>`                                                    |                                              |
+| deque                                 |                                                              | 头文件`<deque>`                              |
 |                                       | dq.push_front(val), dq.push_back(val)                        | 头尾插入                                     |
 |                                       | dq.pop_front(), dq.pop_back()                                | 头尾删除                                     |
 |                                       | dq.front(), dq.back()                                        | 头尾访问                                     |
 |                                       | 其他操作类似vector                                           |                                              |
 |                                       |                                                              |                                              |
 |                                       |                                                              |                                              |
-| set                                   | `<set>`                                                      |                                              |
-| multiset(允许重复)                    | `<set>`                                                      |                                              |
+| set                                   | 头文件`<set>`                                                |                                              |
+| multiset(允许重复)                    | **`set<int, greater<int>>`**                                 | 降序排列                                     |
 |                                       | s.size(), s.empty()                                          | 大小                                         |
 |                                       | s.insert(val)                                                | 插入元素                                     |
 |                                       | s.erase(val), s.erase(it)                                    | 删除值/迭代器                                |
@@ -166,8 +168,8 @@ Counter({'a': 2, 'c': 1, 'b': 1, 'd': 2})
 |                                       | s.upper_bound(val)                                           | 第一个>val的位置                             |
 |                                       |                                                              |                                              |
 |                                       |                                                              |                                              |
-| map                                   | `<map>`                                                      |                                              |
-| multimap(key可重复)                   | `<map>`                                                      |                                              |
+| map                                   | 头文件`<map>`                                                |                                              |
+| multimap(key可重复)                   | **`map<int, string, greater<int>>`**                         | 降序排列                                     |
 |                                       | m[key] = value                                               | 下标访问/创建（**仅map**）                   |
 |                                       | m.insert({key, value})                                       | 插入键值对                                   |
 |                                       | m.at(key)                                                    | 安全访问                                     |
@@ -204,7 +206,7 @@ Counter({'a': 2, 'c': 1, 'b': 1, 'd': 2})
 |                                       |                                                              |                                              |
 | priority_queue<br />（优先队列/堆）   | `<queue>`                                                    |                                              |
 |                                       | `priority_queue<int> pq;`                                    | 大顶堆                                       |
-|                                       | `priority_queue<int, vector<int>, greater<int>> pq;`         | 小顶堆                                       |
+|                                       | **`priority_queue<int, vector<int>, greater<int>> pq;`**     | 小顶堆                                       |
 |                                       | pq.push(val)                                                 | 插入元素                                     |
 |                                       | pq.pop()                                                     | 删除堆顶                                     |
 |                                       | pq.top()                                                     | 堆顶元素                                     |
@@ -233,15 +235,101 @@ Counter({'a': 2, 'c': 1, 'b': 1, 'd': 2})
 
 ### 数学
 
-#### 质数&质因子分解
+#### 素数表(在线打表) + 质因子分解
+
+```C++
+const int maxn = 100020;
+ll n;
+map<int, int> hashTable;	// (质因子，个数)
+
+bool isprime(int x) {	// 判断素数
+    if(x < 2) return false;
+    int sqr = sqrt(1.0 * x);
+    for(int i = 2; i <= sqr; i++) {
+        if(x % i == 0) return false;
+    }
+    return true;
+}
+
+const int maxn = 1e7+1000;
+vector<int> prime;  // 存放所有素数
+bool isprime[maxn];   // isprime[i] == true表示i是素数
+void findPrime() {
+    memset(isprime, 1, sizeof(isprime));	// 初始化全为素数
+    for(int i = 2; i < maxn; i++) {
+        if(isprime[i]) { // i是素数
+            prime.push_back(i);
+            for(int j = i + i; j < maxn; j += i) {  // 筛去i所有倍数
+                isprime[j] = false;
+            }
+        }
+    }
+}
+
+int main() {
+    cin >> n;
+    init();
+    if(n == 1) cout << "1=1" << endl;   // n==1特判
+    else {
+        cout << n << "=";
+        int sqr = sqrt(1.0 * n);
+        for(int i = 0; i < maxn && prime[i] < sqr; i++) {   // 枚举根号n以内的因子
+            while(n % prime[i] == 0) {	      // prime[i]是n的质因子
+                hashTable[prime[i]]++;      // 该质因子次数+1
+                n /= prime[i];		// 只要prime[i]还是n的因子, 就一直除, 直到不是因子为止
+            }
+        }
+        if(n != 1) hashTable[n]++;      // 分解到最后剩下的一定是质因子
+
+        // 输出
+        int i = 0;
+        for(map<int, int>::iterator it = hashTable.begin(); it != hashTable.end(); it++, i++) {
+            if(i > 0) cout << "*";
+            cout << it->first;
+            if(it->second > 1) cout << "^" << it->second;
+        }
+    }
+    return 0;
+}
+```
+
++ 输出样例：
+
+  `97532468=2^2*11*17*101*1291`
 
 
 
-#### 最大公约数GCD & 最小公倍数GCM
+#### 最大公约数GCD & 最小公倍数LCM
+
+```c++
+int gcd(int a, int b) {			// 辗转相除法
+    if(b == 0) return a;
+    return gcd(b, a % b);
+}
+
+int lcm(int a, int b) {			// 最小公倍数 = 乘积 / 最大公因数
+    return a / gcd(a, b) * b;
+}
+```
+
+ 
 
 
 
-#### 
+#### 判断回文数
+
+```c++
+bool isPalin(int x) {
+    if(x < 0) return false;     // 负数不是回文数
+    string s = to_string(x);
+    string tmp = s;             // 保存正序
+    reverse(s.begin(), s.end());
+    return s == tmp;
+
+}
+```
+
+
 
 ### 二分查找
 
@@ -314,6 +402,10 @@ int upperBound(vector<int>& a, int k) { // 大于k的最小下标
 
 
 
+### 树
+
+
+
 #### 二叉树求高度
 
 ```c++
@@ -327,38 +419,62 @@ int maxDepth(TreeNode* root) {			// 自底向上求高度
 
 
 
-### 二叉树层序遍历（BFS)
+#### 树层序遍历（BFS)
 
-```python
-class TreeNode:
-    def __init__(self, val=0, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
+```c++
+//存储结构
+struct Node{
+    int data;
+    int layer;  // 层号
+    vector<int> children;
+}node[maxn];
 
-        
-def levelOrder(self, root: Optional[TreeNode]) ->List[List[int]];	# 传入根节点，返回一个列表，列表每个元素是每层的所有结点组成的子列表
-	if root = None: 
-        return []
-    ans = []
-    q = deque([root])		# deque是python中的双向队列
-    while(q):
-        vals = []		# 存放当前层的所有结点
-        for _ in range(len(q)):		# 遍历次数为当前层的节点个数
-            node = q.popleft()
-            vals.append(node.val)
-            if node.left: q.append(node.left)
-            if node.right: q.append(node.right)
-        ans.append(vals)
-	return ans
-            
+void layerOrder(int root) {
+    queue<int> q;
+    q.push(root);   // 根结点下标入队
+    node[root].layer = 0;   // 根结点层号为0
+    while(!q.empty()) {
+        int front = q.front();  // 取队首结点下标
+        cout << node[front].data;
+        q.pop();
+        for(int i = 0; i < node[front].children.size(); i++) {
+            int child = node[front].children[i];
+            node[child].layer = node[front].layer + 1;
+            q.push(child);
+        }
+    }
+}
+```
+
+
+
+#### LCA最近公共祖先
+
+```c++
+TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+    // 思路：在左右子树递归找给的两个节点.递归过程中:
+    // 1. 如果左右子树分别找到了两个结点，则当前root就是答案，直接返回（自底向上的特性保证了当前root就是LCA）
+    // 2. 如果只在一边找到，另一边没找到，说明找到的那边就是LCA
+
+    if(root == nullptr) return nullptr;   // 没找到
+    if(root == p || root == q) return root;     // 递归到了目标节点就返回这个结点
+    // 分别在左右子树找
+    TreeNode* left = lowestCommonAncestor(root->left, p, q);
+    TreeNode* right = lowestCommonAncestor(root->right, p, q);
+    // 查看结果
+    if(left != nullptr && right != nullptr) {   // 两个结点分别在两边
+        return root;        // 当前root就是答案
+    }else {
+        return left != nullptr ? left : right;  // 否则哪边找到了就返回哪边
+    }
+}
 ```
 
 
 
 
 
-#### 并查集
+### 并查集
 
 + ==获得根结点用`findFather(i)`！！,不要用`father[i]`！==
 
