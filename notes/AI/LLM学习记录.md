@@ -56,6 +56,36 @@ SwitchableNorm是将 BN、LN、IN结合，赋予权重，让网络自己去学�
 
 
 
+### Optimizer
+
+#### SGD
+
+SGD（随机梯度下降）和原始的梯度下降的主要区别是：**每次更新参数时用的数据量不同**。
+
++ SGD每次用一个batch的梯度更新网络
++ 而原始GD必须把整个数据集梯度全部算好后再更新网络
+
+
+
+#### momentum
+
+普通梯度下降：
+
+```
+参数 = 参数 - 学习率 × 当前梯度
+```
+
+加了动量的梯度下降
+
+```
+速度 = 衰减率 × 之前的速度 - 学习率 × 当前梯度
+参数 = 参数 + 速度
+```
+
+
+
+
+
 ### HuggingFace模型权重文件解析
 
 <img src="./../../img/typora-user-images/image-20250521171410439.png" alt="image-20250521171410439" style="zoom: 33%;" /> 
@@ -623,8 +653,13 @@ return O
 
 ![image-20250316160824189](./../../img/typora-user-images/image-20250316160824189.png)
 
-
 ![image-20250316163420038](./../../img/typora-user-images/image-20250316163420038.png)
+
+![image-20250921175203292](./../../img/typora-user-images/image-20250921175203292.png)
+
+
+
+
 
 ---------
 
