@@ -925,11 +925,11 @@ int longestCommonSubsequence(string text1, string text2) {
 
 
 
-#### LCS变体分类
+#### 子序列dp变体
 
 > ## 第一类：直接变体（核心思路完全相同）
 >
-> ### 1. 1035. 不相交的线
+> ### 1035. 不相交的线
 >
 > **问题：** 在两个数组之间画线连接相同的数，线不能相交，求最多能画多少条线。
 >
@@ -939,7 +939,7 @@ int longestCommonSubsequence(string text1, string text2) {
 > - 连线的数量 = 最长公共子序列的长度
 > - 完全相同的DP状态转移
 >
-> ### 2. 1458. 两个子序列的最大点积
+> ### 1458. 两个子序列的最大点积
 >
 > **问题：** 计算两个子序列的最大点积。
 >
@@ -950,7 +950,7 @@ int longestCommonSubsequence(string text1, string text2) {
 >
 > ## 第二类：LCS的直接扩展
 >
-> ### 3. 516. 最长回文子序列
+> ### 516. 最长回文子序列
 >
 > **问题：** 求字符串的最长回文子序列长度。
 >
@@ -960,7 +960,7 @@ int longestCommonSubsequence(string text1, string text2) {
 > - 求原字符串和反转字符串的LCS
 > - 例如："bbbab" 和 "babbb" 的LCS就是最长回文子序列
 >
-> ### 4. 1092. 最短公共超序列
+> ### 1092. 最短公共超序列
 >
 > **问题：** 求包含两个字符串的最短超序列。
 >
@@ -970,7 +970,7 @@ int longestCommonSubsequence(string text1, string text2) {
 > - 先求出LCS，然后构造包含两个字符串的最短序列
 > - 状态转移需要记录构造路径
 >
-> ### 5. 583. 两个字符串的删除操作
+> ### 583. 两个字符串的删除操作
 >
 > **问题：** 通过删除操作使两个字符串相同，求最少删除次数。
 >
@@ -979,7 +979,7 @@ int longestCommonSubsequence(string text1, string text2) {
 > - 最少删除次数 = len1 + len2 - 2 × LCS长度
 > - 保留LCS部分，删除其他字符
 >
-> ### 6. 712. 两个字符串的最小ASCII删除和
+> ### 712. 两个字符串的最小ASCII删除和
 >
 > **问题：** 删除字符使两字符串相同，求最小ASCII值删除和。
 >
@@ -990,7 +990,7 @@ int longestCommonSubsequence(string text1, string text2) {
 >
 > ## 第三类：三个或多个序列的LCS
 >
-> ### 7. 最长公共子序列III（多个字符串）
+> ### 最长公共子序列III（多个字符串）
 >
 > **问题：** 求三个或更多字符串的LCS。
 >
@@ -1002,7 +1002,7 @@ int longestCommonSubsequence(string text1, string text2) {
 >
 > ## 第四类：相似DP模式（区间/序列DP）
 >
-> ### 8. 72. 编辑距离
+> ### 72. 编辑距离
 >
 > **问题：** 将一个字符串转换为另一个字符串的最少操作数。
 >
@@ -1015,7 +1015,7 @@ int longestCommonSubsequence(string text1, string text2) {
 >     dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
 > ```
 >
-> ### 9. 97. 交错字符串
+> ### 97. 交错字符串
 >
 > **问题：** 判断s3是否由s1和s2交错组成。
 >
@@ -1024,7 +1024,7 @@ int longestCommonSubsequence(string text1, string text2) {
 > - `dp[i][j]` = s1前i个字符和s2前j个字符能否组成s3前i+j个字符
 > - 状态转移考虑选择s1还是s2的当前字符
 >
-> ### 10. 115. 不同的子序列
+> ### 115. 不同的子序列
 >
 > **问题：** 在s中找t作为子序列的方案数。
 >
@@ -1037,7 +1037,7 @@ int longestCommonSubsequence(string text1, string text2) {
 >     dp[i][j] = dp[i-1][j]
 > ```
 >
-> ### 11. 392. 判断子序列
+> ### 392. 判断子序列
 >
 > **问题：** 判断s是否为t的子序列。
 >
@@ -1048,13 +1048,13 @@ int longestCommonSubsequence(string text1, string text2) {
 >
 > ## 第五类：回文相关（利用LCS思想）
 >
-> ### 12. 5. 最长回文子串
+> ### 5. 最长回文子串
 >
 > **问题：** 求最长回文子串（注意是子串不是子序列）。
 >
 > **思考方式：** 中心扩展或Manacher算法，与LCS关系较远
 >
-> ### 13. 1312. 让字符串成为回文串的最少插入次数
+> ### 1312. 让字符串成为回文串的最少插入次数
 >
 > **问题：** 最少插入多少字符使字符串变成回文。
 >
@@ -1065,7 +1065,7 @@ int longestCommonSubsequence(string text1, string text2) {
 >
 > ## 第六类：背包问题的序列版本
 >
-> ### 14. 1143变体：带权重的LCS
+> ### 1143变体：带权重的LCS
 >
 > **问题：** 每个字符有权重，求最大权重的公共子序列。
 >
@@ -1099,7 +1099,7 @@ int longestCommonSubsequence(string text1, string text2) {
 
 
 
-#### 编辑距离（LCS变体）
+##### 编辑距离（LCS变体）
 
 > 和LCS的区别：
 >
@@ -1277,7 +1277,7 @@ int longestCommonSubsequence(string text1, string text2) {
 >     )
 > ```
 
-##### 代码
+代码
 
 ```C++
 int minDistance(string word1, string word2) {
@@ -1319,6 +1319,311 @@ int minDistance(string word1, string word2) {
 ```
 
 
+
+
+
+
+
+
+
+#### 最长公共子串（连续）
+
+> 与最长公共子序列唯一区别：不相等时dp=0，而不是继承前面的答案
+
+```c++
+for(int i = 1; i <= m; i++) {
+    for(int j = 1; j <= n; j++) {
+        if(s1[i-1] == s2[j-1]) {
+            dp[i][j] = dp[i-1][j-1] + 1;
+        }else {
+            dp[i][j] = 0;	// 不相等直接变为0
+        }
+    }
+}
+```
+
+
+
+#### 子串dp变体
+
+> # 连续子串线性DP的经典变体
+>
+> ## 1. 最大子数组和（Kadane算法）
+>
+> ### 核心思路
+>
+> **状态定义：** `dp[i]` = 以第i个元素结尾的最大连续子数组和
+>  **转移方程：** `dp[i] = max(nums[i], dp[i-1] + nums[i])`
+>
+> ### 核心代码
+>
+> ```cpp
+> int maxSubArray(vector<int>& nums) {
+>     int maxSum = nums[0];
+>     int currentSum = nums[0];
+>     
+>     for (int i = 1; i < nums.size(); i++) {
+>         // 要么重新开始，要么继续累加
+>         currentSum = max(nums[i], currentSum + nums[i]);
+>         maxSum = max(maxSum, currentSum);
+>     }
+>     
+>     return maxSum;
+> }
+> ```
+>
+> ### 返回具体子数组的版本
+>
+> ```cpp
+> vector<int> maxSubArray(vector<int>& nums) {
+>     int maxSum = nums[0], currentSum = nums[0];
+>     int start = 0, end = 0, tempStart = 0;
+>     
+>     for (int i = 1; i < nums.size(); i++) {
+>         if (currentSum < 0) {
+>             currentSum = nums[i];
+>             tempStart = i;  // 重新开始
+>         } else {
+>             currentSum += nums[i];
+>         }
+>         
+>         if (currentSum > maxSum) {
+>             maxSum = currentSum;
+>             start = tempStart;
+>             end = i;
+>         }
+>     }
+>     
+>     return vector<int>(nums.begin() + start, nums.begin() + end + 1);
+> }
+> ```
+>
+> ## 2. 最大子数组乘积
+>
+> ### 核心思路
+>
+> 由于负数×负数=正数，需要同时维护最大值和最小值
+>  **状态定义：** `maxDP[i]` = 以第i个元素结尾的最大连续子数组乘积，`minDP[i]` = 最小值
+>
+> ### 核心代码
+>
+> ```cpp
+> int maxProduct(vector<int>& nums) {
+>     int maxProd = nums[0], minProd = nums[0], result = nums[0];
+>     
+>     for (int i = 1; i < nums.size(); i++) {
+>         // 当前数为负数时，最大最小值会交换
+>         if (nums[i] < 0) {
+>             swap(maxProd, minProd);
+>         }
+>         
+>         // 要么重新开始，要么继续累乘
+>         maxProd = max(nums[i], maxProd * nums[i]);
+>         minProd = min(nums[i], minProd * nums[i]);
+>         
+>         result = max(result, maxProd);
+>     }
+>     
+>     return result;
+> }
+> ```
+>
+> ## 3. 最长递增连续子序列
+>
+> ### 核心思路
+>
+> **状态定义：** `dp[i]` = 以第i个元素结尾的最长递增连续子序列长度
+>  **转移方程：** 如果`nums[i] > nums[i-1]`，则`dp[i] = dp[i-1] + 1`，否则`dp[i] = 1`
+>
+> ### 核心代码
+>
+> ```cpp
+> int findLengthOfLCIS(vector<int>& nums) {
+>     if (nums.empty()) return 0;
+>     
+>     int maxLen = 1, currentLen = 1;
+>     
+>     for (int i = 1; i < nums.size(); i++) {
+>         if (nums[i] > nums[i-1]) {
+>             currentLen++;  // 继续递增
+>         } else {
+>             currentLen = 1;  // 重新开始
+>         }
+>         maxLen = max(maxLen, currentLen);
+>     }
+>     
+>     return maxLen;
+> }
+> ```
+>
+> ## 4. 最长连续1（可翻转k个0）
+>
+> ### 核心思路
+>
+> **滑动窗口 + DP思想：** 维护一个窗口，窗口内最多包含k个0
+>  **状态维护：** 窗口内0的个数，窗口的起始位置
+>
+> ### 核心代码
+>
+> ```cpp
+> int longestOnes(vector<int>& nums, int k) {
+>     int left = 0, maxLen = 0, zeroCount = 0;
+>     
+>     for (int right = 0; right < nums.size(); right++) {
+>         if (nums[right] == 0) {
+>             zeroCount++;
+>         }
+>         
+>         // 如果0的个数超过k，收缩左边界
+>         while (zeroCount > k) {
+>             if (nums[left] == 0) {
+>                 zeroCount--;
+>             }
+>             left++;
+>         }
+>         
+>         maxLen = max(maxLen, right - left + 1);
+>     }
+>     
+>     return maxLen;
+> }
+> ```
+>
+> ## 5. 和为k的最短连续子数组
+>
+> ### 核心思路
+>
+> **前缀和 + 哈希表：** 利用前缀和的差值来快速判断子数组和
+>  **状态维护：** 每个前缀和第一次出现的位置
+>
+> ### 核心代码
+>
+> ```cpp
+> int shortestSubarray(vector<int>& nums, int k) {
+>     int n = nums.size();
+>     vector<long long> prefixSum(n + 1, 0);
+>     
+>     // 计算前缀和
+>     for (int i = 0; i < n; i++) {
+>         prefixSum[i + 1] = prefixSum[i] + nums[i];
+>     }
+>     
+>     int minLen = INT_MAX;
+>     deque<int> dq;  // 单调队列，存储下标
+>     
+>     for (int i = 0; i <= n; i++) {
+>         // 检查是否存在和为k的子数组
+>         while (!dq.empty() && prefixSum[i] - prefixSum[dq.front()] >= k) {
+>             minLen = min(minLen, i - dq.front());
+>             dq.pop_front();
+>         }
+>         
+>         // 维护单调性（递增）
+>         while (!dq.empty() && prefixSum[i] <= prefixSum[dq.back()]) {
+>             dq.pop_back();
+>         }
+>         
+>         dq.push_back(i);
+>     }
+>     
+>     return minLen == INT_MAX ? -1 : minLen;
+> }
+> ```
+>
+> ## 6. 连续子数组最大平均值
+>
+> ### 核心思路
+>
+> **滑动窗口：** 固定长度k的窗口，求最大和再除以k
+>  **状态维护：** 当前窗口的和
+>
+> ### 核心代码
+>
+> ```cpp
+> double findMaxAverage(vector<int>& nums, int k) {
+>     // 计算第一个窗口的和
+>     int windowSum = 0;
+>     for (int i = 0; i < k; i++) {
+>         windowSum += nums[i];
+>     }
+>     
+>     int maxSum = windowSum;
+>     
+>     // 滑动窗口
+>     for (int i = k; i < nums.size(); i++) {
+>         windowSum = windowSum - nums[i - k] + nums[i];
+>         maxSum = max(maxSum, windowSum);
+>     }
+>     
+>     return (double)maxSum / k;
+> }
+> ```
+>
+> ## 7. 最长连续相同字符（可替换k个字符）
+>
+> ### 核心思路
+>
+> **滑动窗口 + 频率统计：** 维护窗口内字符频率，保证需要替换的字符不超过k个
+>
+> ### 核心代码
+>
+> ```cpp
+> int characterReplacement(string s, int k) {
+>     vector<int> count(26, 0);
+>     int left = 0, maxCount = 0, maxLen = 0;
+>     
+>     for (int right = 0; right < s.length(); right++) {
+>         count[s[right] - 'A']++;
+>         maxCount = max(maxCount, count[s[right] - 'A']);
+>         
+>         // 如果需要替换的字符超过k个，收缩窗口
+>         if (right - left + 1 - maxCount > k) {
+>             count[s[left] - 'A']--;
+>             left++;
+>         }
+>         
+>         maxLen = max(maxLen, right - left + 1);
+>     }
+>     
+>     return maxLen;
+> }
+> ```
+>
+> ## 各变体核心思想总结
+>
+> | 问题               | 核心思想                   | 状态转移关键                      | 时间复杂度 |
+> | ------------------ | -------------------------- | --------------------------------- | ---------- |
+> | **最大子数组和**   | 要么重新开始，要么继续累加 | `max(nums[i], dp[i-1] + nums[i])` | O(n)       |
+> | **最大子数组乘积** | 维护最大最小值（负负得正） | 考虑正负号影响                    | O(n)       |
+> | **最长递增子序列** | 连续性约束，断了就重置     | 比较相邻元素                      | O(n)       |
+> | **最长连续1**      | 滑动窗口，维护0的个数      | 窗口伸缩                          | O(n)       |
+> | **和为k子数组**    | 前缀和差值，单调队列       | 前缀和技巧                        | O(n)       |
+> | **最大平均值**     | 固定窗口大小               | 窗口滑动                          | O(n)       |
+> | **字符替换**       | 窗口内维护字符频率         | 频率统计                          | O(n)       |
+>
+> ## 通用模式识别
+>
+> ### 1. **累积型问题**（和、积）
+>
+> - 维护当前累积值
+> - 决策：继续累积 vs 重新开始
+>
+> ### 2. **计数型问题**（长度、个数）
+>
+> - 维护当前计数
+> - 条件满足时计数+1，不满足时重置
+>
+> ### 3. **窗口型问题**（固定/可变窗口）
+>
+> - 维护窗口状态
+> - 根据条件伸缩窗口边界
+>
+> ### 4. **约束型问题**（最多k个某元素）
+>
+> - 维护约束条件
+> - 违反约束时调整策略
+>
+> **核心记忆：** 连续子串DP的精髓在于"**断了就重新开始**"的思想，这是与普通DP最大的区别。
 
 
 
@@ -1434,7 +1739,631 @@ int minDistance(string word1, string word2) {
 
 
 
-### 三 状态机dp
+### 三 区间dp
+
+> *Thinking...*
+>
+> > 用户要求我总结经典区间DP以及变体，包括思路与核心代码。让我按照不同的类型来分类整理：
+> >
+> > 1. 基础区间DP
+> >    - 最长回文子串
+> >    - 最长回文子序列
+> >    - 区间内最小分割次数
+> > 2. 合并类区间DP
+> >    - 矩阵链乘法
+> >    - 石子合并
+> >    - 戳气球
+> > 3. 匹配类区间DP
+> >    - 括号匹配
+> >    - 有效括号最少添加
+> > 4. 博弈类区间DP
+> >    - 石子游戏
+> >    - 预测赢家
+> > 5. 其他经典变体
+> >    - 回文串分割
+> >    - 最优二叉搜索树
+> >
+> > 每个问题我需要提供：
+> >
+> > - 问题描述
+> > - 核心思路
+> > - 状态定义
+> > - 转移方程
+> > - 完整代码
+> > - 复杂度分析
+> >
+> > 让我按照这个结构来组织答案。
+>
+> # 经典区间DP及变体全解析
+>
+> ## 1. 基础回文类区间DP
+>
+> ### 1.1 最长回文子串
+>
+> #### 问题描述
+>
+> 给定字符串s，找出最长回文子串。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 区间[i,j]是否为回文串
+>  **转移方程：** 去掉两端，看内部是否回文
+>
+> #### 核心代码
+>
+> ```cpp
+> string longestPalindrome(string s) {
+>     int n = s.length();
+>     if (n <= 1) return s;
+>     
+>     vector<vector<bool>> dp(n, vector<bool>(n, false));
+>     string result = "";
+>     
+>     // 按区间长度填充
+>     for (int len = 1; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             
+>             if (len == 1) {
+>                 dp[i][j] = true;  // 单字符
+>             } else if (len == 2) {
+>                 dp[i][j] = (s[i] == s[j]);  // 双字符
+>             } else {
+>                 dp[i][j] = (s[i] == s[j]) && dp[i+1][j-1];
+>             }
+>             
+>             if (dp[i][j] && len > result.length()) {
+>                 result = s.substr(i, len);
+>             }
+>         }
+>     }
+>     
+>     return result;
+> }
+> ```
+>
+> ### 1.2 最长回文子序列
+>
+> #### 问题描述
+>
+> 给定字符串s，找出最长回文子序列的长度。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 区间[i,j]内最长回文子序列长度
+>  **转移方程：** 首尾相等时+2，否则取较大值
+>
+> #### 核心代码
+>
+> ```cpp
+> int longestPalindromeSubseq(string s) {
+>     int n = s.length();
+>     vector<vector<int>> dp(n, vector<int>(n, 0));
+>     
+>     // 按区间长度填充
+>     for (int len = 1; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             
+>             if (len == 1) {
+>                 dp[i][j] = 1;  // 单字符长度为1
+>             } else if (s[i] == s[j]) {
+>                 dp[i][j] = dp[i+1][j-1] + 2;  // 首尾相等
+>             } else {
+>                 dp[i][j] = max(dp[i+1][j], dp[i][j-1]);  // 去掉一端
+>             }
+>         }
+>     }
+>     
+>     return dp[0][n-1];
+> }
+> ```
+>
+> ### 1.3 回文串分割（最少分割次数）
+>
+> #### 问题描述
+>
+> 给定字符串s，返回使每个子串都是回文串的最少分割次数。
+>
+> #### 核心思路
+>
+> **预处理：** 先用区间DP求出所有回文子串
+>  **状态定义：** `dp[i]` = 前i个字符的最少分割次数
+>
+> #### 核心代码
+>
+> ```cpp
+> int minCut(string s) {
+>     int n = s.length();
+>     
+>     // 预处理：判断所有子串是否为回文
+>     vector<vector<bool>> isPalin(n, vector<bool>(n, false));
+>     for (int len = 1; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             if (len == 1) {
+>                 isPalin[i][j] = true;
+>             } else if (len == 2) {
+>                 isPalin[i][j] = (s[i] == s[j]);
+>             } else {
+>                 isPalin[i][j] = (s[i] == s[j]) && isPalin[i+1][j-1];
+>             }
+>         }
+>     }
+>     
+>     // dp[i] = 前i个字符的最少分割次数
+>     vector<int> dp(n + 1, INT_MAX);
+>     dp[0] = 0;
+>     
+>     for (int i = 1; i <= n; i++) {
+>         if (isPalin[0][i-1]) {
+>             dp[i] = 0;  // 整个前缀就是回文
+>         } else {
+>             for (int j = 1; j < i; j++) {
+>                 if (isPalin[j][i-1]) {
+>                     dp[i] = min(dp[i], dp[j] + 1);
+>                 }
+>             }
+>         }
+>     }
+>     
+>     return dp[n];
+> }
+> ```
+>
+> ## 2. 合并类区间DP
+>
+> ### 2.1 矩阵链乘法
+>
+> #### 问题描述
+>
+> 给定矩阵链，求最少的标量乘法次数。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 计算矩阵i到j的最少乘法次数
+>  **转移方程：** 枚举分割点k，分成两部分计算
+>
+> #### 核心代码
+>
+> ```cpp
+> int matrixChainOrder(vector<int>& dims) {
+>     int n = dims.size() - 1;  // n个矩阵
+>     vector<vector<int>> dp(n, vector<int>(n, 0));
+>     
+>     // 按区间长度填充
+>     for (int len = 2; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             dp[i][j] = INT_MAX;
+>             
+>             // 枚举分割点
+>             for (int k = i; k < j; k++) {
+>                 int cost = dp[i][k] + dp[k+1][j] + 
+>                           dims[i] * dims[k+1] * dims[j+1];
+>                 dp[i][j] = min(dp[i][j], cost);
+>             }
+>         }
+>     }
+>     
+>     return dp[0][n-1];
+> }
+> ```
+>
+> ### 2.2 石子合并
+>
+> #### 问题描述
+>
+> 有n堆石子，每次只能合并相邻的两堆，求最小合并代价。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 合并第i堆到第j堆的最小代价
+>  **转移方程：** 枚举分割点，加上合并代价
+>
+> #### 核心代码
+>
+> ```cpp
+> int stoneGame(vector<int>& stones) {
+>     int n = stones.size();
+>     
+>     // 前缀和
+>     vector<int> prefixSum(n + 1, 0);
+>     for (int i = 0; i < n; i++) {
+>         prefixSum[i + 1] = prefixSum[i] + stones[i];
+>     }
+>     
+>     vector<vector<int>> dp(n, vector<int>(n, 0));
+>     
+>     // 按区间长度填充
+>     for (int len = 2; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             dp[i][j] = INT_MAX;
+>             
+>             int sum = prefixSum[j + 1] - prefixSum[i];  // 区间和
+>             
+>             for (int k = i; k < j; k++) {
+>                 dp[i][j] = min(dp[i][j], dp[i][k] + dp[k+1][j] + sum);
+>             }
+>         }
+>     }
+>     
+>     return dp[0][n-1];
+> }
+> ```
+>
+> ### 2.3 戳气球（最大分数）
+>
+> #### 问题描述
+>
+> 有n个气球，戳破第i个气球得分为`nums[left]*nums[i]*nums[right]`，求最大得分。
+>
+> #### 核心思路
+>
+> **技巧：** 两端添加虚拟气球（值为1）
+>  **状态定义：** `dp[i][j]` = 戳破开区间(i,j)内所有气球的最大得分
+>  **转移方程：** 枚举最后戳破的气球k
+>
+> #### 核心代码
+>
+> ```cpp
+> int maxCoins(vector<int>& nums) {
+>     int n = nums.size();
+>     vector<int> arr(n + 2);
+>     arr[0] = arr[n + 1] = 1;  // 添加虚拟边界
+>     for (int i = 1; i <= n; i++) {
+>         arr[i] = nums[i - 1];
+>     }
+>     
+>     // dp[i][j] = 戳破开区间(i,j)内所有气球的最大得分
+>     vector<vector<int>> dp(n + 2, vector<int>(n + 2, 0));
+>     
+>     // 按区间长度填充
+>     for (int len = 2; len <= n + 1; len++) {
+>         for (int i = 0; i <= n + 1 - len; i++) {
+>             int j = i + len;
+>             
+>             // 枚举最后戳破的气球k
+>             for (int k = i + 1; k < j; k++) {
+>                 int score = arr[i] * arr[k] * arr[j];
+>                 dp[i][j] = max(dp[i][j], dp[i][k] + dp[k][j] + score);
+>             }
+>         }
+>     }
+>     
+>     return dp[0][n + 1];
+> }
+> ```
+>
+> ## 3. 匹配类区间DP
+>
+> ### 3.1 有效括号匹配
+>
+> #### 问题描述
+>
+> 给定只包含括号的字符串，判断是否有效。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 区间[i,j]是否能完全匹配
+>  **转移方程：** 首尾匹配+内部匹配，或分割成两部分
+>
+> #### 核心代码
+>
+> ```cpp
+> bool isValidParentheses(string s) {
+>     int n = s.length();
+>     if (n % 2 == 1) return false;
+>     
+>     vector<vector<bool>> dp(n, vector<bool>(n, false));
+>     
+>     // 按区间长度填充
+>     for (int len = 2; len <= n; len += 2) {  // 只考虑偶数长度
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             
+>             // 情况1：首尾匹配，内部也匹配
+>             if (isMatch(s[i], s[j]) && dp[i+1][j-1]) {
+>                 dp[i][j] = true;
+>             }
+>             
+>             // 情况2：分割成两部分
+>             for (int k = i + 1; k < j; k += 2) {
+>                 if (dp[i][k] && dp[k+1][j]) {
+>                     dp[i][j] = true;
+>                     break;
+>                 }
+>             }
+>         }
+>     }
+>     
+>     return dp[0][n-1];
+> }
+> 
+> bool isMatch(char left, char right) {
+>     return (left == '(' && right == ')') ||
+>            (left == '[' && right == ']') ||
+>            (left == '{' && right == '}');
+> }
+> ```
+>
+> ### 3.2 最少添加括号使其有效
+>
+> #### 问题描述
+>
+> 给定括号字符串，返回使其有效需要添加的最少括号数。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 使区间[i,j]有效需要添加的最少括号数
+>
+> #### 核心代码
+>
+> ```cpp
+> int minAddToMakeValid(string s) {
+>     int n = s.length();
+>     vector<vector<int>> dp(n, vector<int>(n, 0));
+>     
+>     // 单个字符需要添加1个
+>     for (int i = 0; i < n; i++) {
+>         dp[i][i] = 1;
+>     }
+>     
+>     // 按区间长度填充
+>     for (int len = 2; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             dp[i][j] = len;  // 最坏情况：每个字符都需要添加1个
+>             
+>             // 情况1：首尾匹配
+>             if (isMatch(s[i], s[j])) {
+>                 dp[i][j] = min(dp[i][j], dp[i+1][j-1]);
+>             }
+>             
+>             // 情况2：分割成两部分
+>             for (int k = i; k < j; k++) {
+>                 dp[i][j] = min(dp[i][j], dp[i][k] + dp[k+1][j]);
+>             }
+>         }
+>     }
+>     
+>     return dp[0][n-1];
+> }
+> ```
+>
+> ## 4. 博弈类区间DP
+>
+> ### 4.1 石子游戏（预测赢家）
+>
+> #### 问题描述
+>
+> 两人轮流取数组两端的数，求先手能否获胜。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 在区间[i,j]中先手比后手多得的最大分数
+>  **转移方程：** 选左端或右端，对手变成先手
+>
+> #### 核心代码
+>
+> ```cpp
+> bool predictTheWinner(vector<int>& nums) {
+>     int n = nums.size();
+>     vector<vector<int>> dp(n, vector<int>(n, 0));
+>     
+>     // 单个元素时，先手直接拿走
+>     for (int i = 0; i < n; i++) {
+>         dp[i][i] = nums[i];
+>     }
+>     
+>     // 按区间长度填充
+>     for (int len = 2; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             
+>             // 选择左端或右端，使得领先分数最大
+>             int takeLeft = nums[i] - dp[i+1][j];
+>             int takeRight = nums[j] - dp[i][j-1];
+>             dp[i][j] = max(takeLeft, takeRight);
+>         }
+>     }
+>     
+>     return dp[0][n-1] >= 0;  // 先手领先分数≥0就能获胜
+> }
+> ```
+>
+> ### 4.2 石子游戏II（动态M值）
+>
+> #### 问题描述
+>
+> 每次可以取1到2*M堆石子，M的初值为1，取了X堆后M更新为max(M,X)。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][m]` = 从第i堆开始，当前M值下先手能得到的最大石子数
+>
+> #### 核心代码
+>
+> ```cpp
+> int stoneGameII(vector<int>& piles) {
+>     int n = piles.size();
+>     
+>     // 后缀和
+>     vector<int> suffixSum(n + 1, 0);
+>     for (int i = n - 1; i >= 0; i--) {
+>         suffixSum[i] = suffixSum[i + 1] + piles[i];
+>     }
+>     
+>     // dp[i][m] = 从位置i开始，M值为m时先手能得到的最大值
+>     vector<vector<int>> dp(n, vector<int>(n + 1, 0));
+>     
+>     // 从后往前填充
+>     for (int i = n - 1; i >= 0; i--) {
+>         for (int m = 1; m <= n; m++) {
+>             // 如果能取完所有剩余石子
+>             if (i + 2 * m >= n) {
+>                 dp[i][m] = suffixSum[i];
+>             } else {
+>                 // 枚举取x堆（1 <= x <= 2*m）
+>                 for (int x = 1; x <= 2 * m; x++) {
+>                     int newM = max(m, x);
+>                     dp[i][m] = max(dp[i][m], 
+>                                   suffixSum[i] - dp[i + x][newM]);
+>                 }
+>             }
+>         }
+>     }
+>     
+>     return dp[0][1];
+> }
+> ```
+>
+> ## 5. 其他经典变体
+>
+> ### 5.1 最优二叉搜索树
+>
+> #### 问题描述
+>
+> 给定搜索频率，构造最优二叉搜索树使得搜索代价最小。
+>
+> #### 核心思路
+>
+> **状态定义：** `dp[i][j]` = 构造包含keys[i]到keys[j]的最优BST的最小代价
+>  **转移方程：** 枚举根节点
+>
+> #### 核心代码
+>
+> ```cpp
+> int optimalBST(vector<int>& keys, vector<int>& freq) {
+>     int n = keys.size();
+>     vector<vector<int>> dp(n, vector<int>(n, 0));
+>     vector<int> prefixSum(n + 1, 0);
+>     
+>     for (int i = 0; i < n; i++) {
+>         prefixSum[i + 1] = prefixSum[i] + freq[i];
+>     }
+>     
+>     // 按区间长度填充
+>     for (int len = 1; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             dp[i][j] = INT_MAX;
+>             
+>             int sum = prefixSum[j + 1] - prefixSum[i];
+>             
+>             if (len == 1) {
+>                 dp[i][j] = freq[i];
+>             } else {
+>                 // 枚举根节点
+>                 for (int r = i; r <= j; r++) {
+>                     int cost = sum;
+>                     if (r > i) cost += dp[i][r-1];
+>                     if (r < j) cost += dp[r+1][j];
+>                     dp[i][j] = min(dp[i][j], cost);
+>                 }
+>             }
+>         }
+>     }
+>     
+>     return dp[0][n-1];
+> }
+> ```
+>
+> ### 5.2 回文串删除（最少删除次数）
+>
+> #### 问题描述
+>
+> 删除最少字符使字符串变成回文串。
+>
+> #### 核心思路
+>
+> **转化：** 原串长度 - 最长回文子序列长度
+>
+> #### 核心代码
+>
+> ```cpp
+> int minDeletions(string s) {
+>     int n = s.length();
+>     vector<vector<int>> dp(n, vector<int>(n, 0));
+>     
+>     // 求最长回文子序列
+>     for (int len = 1; len <= n; len++) {
+>         for (int i = 0; i <= n - len; i++) {
+>             int j = i + len - 1;
+>             
+>             if (len == 1) {
+>                 dp[i][j] = 1;
+>             } else if (s[i] == s[j]) {
+>                 dp[i][j] = dp[i+1][j-1] + 2;
+>             } else {
+>                 dp[i][j] = max(dp[i+1][j], dp[i][j-1]);
+>             }
+>         }
+>     }
+>     
+>     return n - dp[0][n-1];
+> }
+> ```
+>
+> ## 6. 区间DP模板总结
+>
+> ### 通用模板
+>
+> ```cpp
+> // 区间DP通用模板
+> vector<vector<int>> dp(n, vector<int>(n, 初始值));
+> 
+> // 初始化单个元素
+> for (int i = 0; i < n; i++) {
+>     dp[i][i] = 单个元素的值;
+> }
+> 
+> // 按区间长度递增填充
+> for (int len = 2; len <= n; len++) {           // 区间长度
+>     for (int i = 0; i <= n - len; i++) {       // 左端点
+>         int j = i + len - 1;                   // 右端点
+>         
+>         // 方式1：去掉两端（如回文问题）
+>         if (condition) {
+>             dp[i][j] = dp[i+1][j-1] + 额外代价;
+>         }
+>         
+>         // 方式2：枚举分割点（如合并问题）
+>         for (int k = i; k < j; k++) {
+>             dp[i][j] = min/max(dp[i][j], 
+>                               dp[i][k] + dp[k+1][j] + 合并代价);
+>         }
+>         
+>         // 方式3：其他转移
+>         dp[i][j] = f(dp[其他状态]);
+>     }
+> }
+> 
+> return dp[0][n-1];  // 整个区间的答案
+> ```
+>
+> ### 复杂度分析
+>
+> | 类型           | 时间复杂度 | 空间复杂度 | 特点             |
+> | -------------- | ---------- | ---------- | ---------------- |
+> | **基础区间DP** | O(n²)      | O(n²)      | 简单转移         |
+> | **合并类**     | O(n³)      | O(n²)      | 三重循环         |
+> | **博弈类**     | O(n³)      | O(n²)      | 考虑对手最优策略 |
+>
+> ### 记忆要点
+>
+> 1. **填充顺序：** 按区间长度从小到大
+> 2. **边界处理：** 单个元素和相邻元素
+> 3. **转移方向：** 从小区间推大区间
+> 4. **分割策略：** 枚举所有可能分割点
+> 5. **状态压缩：** 某些情况可以用滚动数组优化空间
+
+
+
+
+
+### 四 状态机dp
 
 > ## 什么是状态机？
 >
