@@ -333,39 +333,6 @@ bool isPalin(int x) {
 
 ### 二分查找
 
-```python
-# 在递增序列nums的[left，right]区间进行二分，找x返回下标，找不到返回-1
-def binarySearch(nums, left, right, target):
-    while(left <= right):		# 条件不成立说明找不到
-        mid = left + (right-left) // 2
-        if nums[mid] < target:		# 中点在目标值左边，往右找（[]
-            left = mid + 1
-        elif nums[mid] > target:		# 中点在目标值右边，往左找
-            right = mid - 1
-        else return mid
-   	return -1		# 找不到返回-1
-
-def lowerBound(nums, target):	# 返回>=k的最小下标
-	l = 0, r = len(nums) - 1
-    while(l < r):		# 退出循环时l=r说明已经找到
-        mid = l + (r-l) // 2
-        if mid < target:	# 中点<目标值时，答案一定在右边
-            l = mid + 1
-        else r = mid		# 中点大于或等于目标值时，答案要么是此处，要么在左边
-    return l
-
-def upperBound(nums, target):	# 返回>k的最小下标
-    l = 0, r = len(nums) - 1
-    while(l < r):		# 退出循环时l=r说明已经找到
-        mid = l + (r-l) // 2
-        if mid <= target:	# 中点<=目标值时，答案一定在右边
-            l = mid + 1
-        else r = mid		# 中点大于目标值时，答案要么是此处，要么在左边
-    return l
-```
-
-
-
 ```C++
 //在递增序列a的[left，right]区间进行二分，找x返回下标，找不到返回-1
 int binarySearch(int a[], int left, int right, int x) {
@@ -397,6 +364,105 @@ int upperBound(vector<int>& a, int k) { // 大于k的最小下标
         else r = mid;   // 中点大于k，可能就是此处
     }
     return l;
+}
+```
+
+
+
+### 排序
+
+#### 快速排序
+
+步骤：
+
+1. 设k(==主元==)为a[0]，**将k挪动到适当位置，使得比k小的元素都在k左边，比k大的元素在k右边**。***这一步复杂度为O(n)***
+2. 递归k左边的部分
+3. 递归k右边的部分
+
+```C++
+void quickSort(int a[], int st, int ed) {   // 对数组a的区间[st, ed]快排
+    if(st >= ed) return;    // 递归边界
+    int k = a[st];  // 选主元（若主元是随机选取则需要将主元与a[st]交换位置）
+    // 移动主元至适当位置
+    int i = st, j = ed; //two-pointers	O(n)
+    while(i != j) {     // i与j相遇时退出
+        while(j > i && a[j] >= k) j--;   // 右边大，j左移
+        swap(a[i], a[j]);
+        while(i < j && a[i] <= k) i++;  // 左边小，i右移
+        swap(a[i], a[j]);
+    }//处理完后，a[i] = a[j] = k	
+    quickSort(a, st, i-1);  // 递归k的左边
+    quickSort(a, i+1, ed);  // 递归k的右边
+}
+```
+
+
+
+
+
+#### 插入排序
+
++ 理牌
++ 每轮只看前i个元素，把第i个元素插入到对应的位置（不是最终位置）
+
+```C++
+void insertSort(vector<int>& a, int n) {   // 插入排序，下标1~n;
+    for(int i = 2; i <= n; i++) {   // a[i]是当前准备插入的元素
+        int j = i;  // j从i往前遍历，找到插入位置
+        int temp = a[i];    // 临时存放准备插入的元素
+        while(j > 1 && a[j-1] > temp) {	// 只要前面元素大
+            a[j] = a[j-1];		// 就把前面元素后移
+            j--;		// j枚举到1时结束
+        }
+        a[j] = temp;    // 插入
+    }
+}
+```
+
+
+
+
+
+#### 冒泡排序
+
+```c++
+void bubbleSort(vector<int>& nums) {
+    int n = nums.size();
+    
+    for(int i = 0; i < n - 1; i++) {	// n-1轮, 每轮得到一个最大元素的最终位置
+        bool swapped = false;  // 标记这轮是否有交换
+        for(int j = 0; j < n - 1 - i; j++) {	// 每轮比较相邻元素，大的往后移
+            if(nums[j] > nums[j + 1]) {
+                swap(nums[j], nums[j + 1]);
+                swapped = true;
+            }
+        }
+        // 如果这轮没有交换，说明已经有序
+        if(!swapped) break;
+    }
+}
+```
+
++ 通常比插入排序慢
++ 需要很多交换操作，而插入排序通过元素移动代替交换
+
+
+#### 选择排序
+
++ 最容易理解：n轮，每轮找到最小值，与当前位置交换
+
+```c++
+void selectSort(vector<int>& a) {
+    int n = a.size();
+    for(int i = 0; i < n-1; i++) {		// 每轮按顺序得到一个最终位置
+        int min_pos = i;
+        for(int j = i; j < n; j++) {	// 在后面找更小的
+            if(a[j] < a[i]) {
+            	min_pos = j;		// 记录最小值下标
+            }
+        }
+        if(min_pos != i) swap(a[min_pos], a[i]);
+     }
 }
 ```
 

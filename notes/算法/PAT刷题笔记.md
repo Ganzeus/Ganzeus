@@ -70,7 +70,7 @@ sort(v.begin(), v.end());
 
 例：
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20211215213821535.png" alt="image-20211215213821535" style="zoom: 50%;" />
+<img src="..\..\img\typora-user-images\image-20211215213821535.png" alt="image-20211215213821535" style="zoom: 50%;" />
 
 
 
@@ -176,7 +176,7 @@ for(int i = 0; i < str.length(); i++){
 
 ##### string转换函数
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220303154343022.png" alt="image-20220303154343022" style="zoom:50%;" /> 
+<img src="..\..\img\\typora-user-images\image-20220303154343022.png" alt="image-20220303154343022" style="zoom:50%;" /> 
 
 ##### 数字等其他类型转字符串
 
@@ -377,7 +377,7 @@ string rev(string s) {
 
 #### 后序+中序建二叉树
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20211214144725375.png" alt="image-20211214144725375" style="zoom: 50%;" />
+<img src="..\..\img\typora-user-images\image-20211214144725375.png" alt="image-20211214144725375" style="zoom: 50%;" />
 
 ```C++
 /* 中序+后序建二叉树 */
@@ -474,7 +474,7 @@ int main() {
 
 1. 柳神
 
-<img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220223232427998.png" alt="image-20220223232427998" style="zoom:33%;" />
+<img src="..\..\img\typora-user-images\image-20220223232427998.png" alt="image-20220223232427998" style="zoom:33%;" />
 
 ```C++
 int n, maxOrder = -1;    
@@ -496,9 +496,9 @@ if(maxOrder == n) {
 
 2. 晴神
 
-   <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220227154023019.png" alt="image-20220227154023019" style="zoom: 67%;" /> 
+   <img src="..\..\img\typora-user-images\image-20220227154023019.png" alt="image-20220227154023019" style="zoom: 67%;" /> 
 
-   <img src="C:\Users\Ganzeus\AppData\Roaming\Typora\typora-user-images\image-20220227154059064.png" alt="image-20220227154059064" style="zoom: 50%;" /> 
+   <img src="..\..\img\typora-user-images\image-20220227154059064.png" alt="image-20220227154059064" style="zoom: 50%;" /> 
 
    
 
