@@ -538,6 +538,31 @@ TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
 
 
 
+#### 后序+中序建树
+
+<img src="..\..\img\typora-user-images\image-20211214144725375.png" alt="image-20211214144725375" style="zoom: 50%;" />
+
+```c++
+/* 中序+后序建二叉树 */
+Node* create(int postL, int postR, int inL, int inR) {
+  if(postL > postR) return NULL;  // 递归边界
+  Node* root = new Node;
+  root->data = post[postR];		// 根节点为后序的最后一个位置
+  int k = inL;
+  for(; k <= inR; k++) {  // 找树根下标k
+    if(in[k] == post[postR]) break;
+  }
+  // 此时in[k]为树根结点值，中序中k左边为左子树[inL, k-1], 右边为右子树[k+1, inR]
+  int numLeft = k - inL;          // numLeft用于判断后序中的左右子树区间
+  // 后序中左子树[postL, postL+numLeft-1], 右子树[postL+numLeft, postR-1]
+  root->lchild = create(postL, postL + numLeft - 1, inL, k - 1);
+  root->rchild = create(postL + numLeft, postR - 1, k + 1, inR);
+  return node;
+}
+```
+
+
+
 
 
 ### 并查集
@@ -2583,390 +2608,6 @@ sell2 = max(sell2, buy2 + price)
 
 
 
-## 灵神视频
-
-#### 209.长度最小的子数组
-
-思考
-
-+ 先判断没有答案的情况：计算sum, <target返回0
-+ 枚举子数组长度（1~n), 轮流计算
-+ $时间O(n^2), 空间O(1)$
-+ 改为二分子数组长度，空间复杂度为$O(n\sqrt n)$
-
-
-
-灵神
-
-+ 枚举右端点，收缩左端点
-  + 右端点0~n-1,左端点从0开始，都只会一直右移，不会回头，因此共享$O(n)$复杂度——**滑动窗口**
-  + 设置一个变量(s)作为当前的总和，而不是每次都从左加到右（右端点右移时s加上右端点元素值，左端点右移时s减去左端点元素值）
-  + 右移右端点，直到总和>=target,记录答案，然后开始不断右移左端点，直到总和<target，接着枚举下一个右端点。
-+ 时间：$O(n)$
-  空间：$O(1)$
-+ 为什么左端点只会右移不会回头？
-  因为数组元素都为正，如果当前总和大于target，右端点右移后总和一定大于target，因此左端点一定会右移
-
-
-
-#### 713.乘积小于K的子数组
-
-思考
-
-+ 暴力：两个for循环枚举所有子数组，每次都计算乘积并判断
-+ 双指针：不会
-
-灵神
-
-+ 同向双指针（滑动窗口），设置变量记录当前的累乘
-+ 先右移右指针，若当前[l,r]累乘<k，则添加答案:
-  [l, r], [l+1, r], ..., [r, r]\(即[r])。（**这些子数组的个数为r-l+1**)
-  若当前累乘>=k, 停止移动右指针，开始移动左指针
-+ 移动左指针直到[l,r]累乘<k，添加答案后立刻继续移动右指针
-+ 要点：**每次添加答案要严格保持右端点不变，这样才不会重复**
-+ 时间：$O(n)$
-  空间：$O(1)$
-
-
-
-#### 3.无重复字符的最长子串
-
-思考
-
-+ 不会判断子串有没有重复字符（c++可以用map，但python不会)
-+ 右移右指针，直到发现有重复字符，此时更新答案，并移动左指针直到没有重复字符为止
-
-灵神
-
-+ 方法一样
-+ **python判断字符串重复字符————Counter类**
-  + 只需要每次记录右端点元素的出现次数（因为重复元素必定是右端点）
-+ 时间：$O(n)$
-  空间：$O(128)$(字符的所有可能)
-
-
-
-#### 162.寻找峰值
-
-思考：
-
-题目要求O(logn)，只能用二分，但是数组不是有序的，该如何判断往左还是往右？没思路
-
-灵神：
-
-红蓝染色法（红表示小，蓝表示大）->**即定义新的大小判定，把无序数组当成有序数组来看**
-
-> 注意二分之前并不知道哪些元素是红，哪些是蓝，染色是在二分查找过程中进行的——即每次查找的区间为未染色的区间
-
-+ 假设要找的**目标元素是某一个峰值（不能确定找的是哪一个，但一定能找到一个）**，定义红色为目标元素左边的元素，蓝色为目标元素或目标右边的元素
-+ 只需要比较mid元素和其右边的大小，就可以判断目标峰值在左边还是右边：
-  + 对于mid，若右边的元素(mid+1)更大，则**右边一定有峰值！极端情况是右边是递增序列，那么峰值就是最后一个元素**，即mid是某一个峰值的左侧，可以直接往右找，排除左边所有元素（即使左边也有峰值）；
-  + 若右边的元素更小，则**左边一定有峰值！极端情况是左边是递减序列，那么峰值就是第一个元素**，即mid要么是峰值，要么在峰值右边，可以直接往左找，排除右边所有元素（即使右边也有峰值）
-+ 数组最右边(n-1)一定是蓝色（若nums[n-2] > nums[n-1], n-1就是峰值右边；反之n-1就是峰值）
-
-
-
-#### 206.反转链表
-
-> 反转整个链表
-
-思考：
-遍历一次记录所有数值，接着重新创建链表（时空都是O(n))
-
-灵神:
-
-+ 原地修改链表——**三个指针pre, cur(当前结点）, next(防止丢失下一个结点)**
-
-+ 每次将cur->next改为pre, 接着pre=cur, cur=next, next=next->next
-
-+ 直到cur=null结束
-+ 时间O(n), 空间O(1)
-
-
-
-#### 92.反转链表II
-
-> 反转中间部分链表
-
-思考：
-保存反转部分的前一个结点，反转结束后将这个结点的next改为已反转部分的第一个结点
-
-
-
-灵神：
-
-+ 特殊情况：反转部分没有前一个结点
-+ 可以添加一个空结点dummy作为前一个结点
-+ 反转链表的循环次数为right-left+1次
-
-
-
-#### 25.K个一组翻转链表
-
-> 每k个结点反转一次
-
-思考：
-反转n/k次
-
-灵神：
-
-+ 每段反转要修改p0为上一段的第一个结点
-+ 不需要计算反转的段数，只需要每次反转判断剩余结点是否>=k
-
-
-
-#### 876.链表中间结点
-
-思考：
-
-快慢指针,每次慢的移动一格，快的移动两格，快指针==n或null时结束，等于n是返回slow->next，等于null时返回slow
-
-灵神
-
-+ 不需要链表长度，只需要每次保证快指针的next不为空，就能继续移动
-+ 若快指针的next为空，即可说明快指针==n
-
-
-
-#### 142.环形链表II
-
-> 判断链表是否有环,输出环的起点
-
-思考：
-
-快慢指针不停移动，指针相同时说明有环 
-（如果有环快慢指针一定会相遇）
-
-快指针为null时说明无环
-
-如何找到环的入口？
-
-灵神：
-
-+ 慢指针从相遇点开始，和head指针同步走，一定会相遇，相遇点就是环入口
-+ a(入口与head距离) = 若干倍环长 + c(快慢相遇点到入口的距离)
-
-
-
-#### 143.重排链表
-
-> 改为0->n->1->n-1->2->...
-
-思考：
-只会重建链表，不会原地修改
-
-灵神：
-
-+ 将中点到末尾的链表反转，接着把两个链表合并
-
-
-
-#### 237.删除链表中的节点
-
-> 只知道要删除的节点，不知道上一个节点
-
-思考：
-
-不知道前一个结点怎么删除？无法修改前一个节点的next
-
-灵神：
-
-+ 脑筋急转弯
-+ **删除下一个节点，保留当前结点**（要先把下一个结点的数值复制到当前节点）
-
-
-
-#### 19.删除链表的倒数第N个结点
-
-思考：
-双指针，左右指针相差n步，右指针走到头时，删除左指针
-
-灵神：
-
-+ 需要一个dummy node作为头节点，防止删除第一个结点的情况
-
-#### 83.删除排序链表中的重复元素
-
-> 已排序的链表去重
-
-思考：
-每个结点判断下一个结点元素值是不是和当前相等，相等就删掉
-
-
-
-#### 82.删除排序链表中的重复元素II
-
-> 删除全部重复元素，一个都不保留
-
-思考：
-下个结点值与当前相等时，记录当前结点，去重之后再删掉这个结点
-
-灵神：
-
-+ 需要创建dummy node，作为初始当前结点（当前节点一定时不重复的结点）
-+ 判断next和next->next是否相同，相同就不断循环删除
-
-
-
-
-
-100.相同的树
-
-> 判断两个树是否相同
-
-思考：
-
-+ 层序遍历转成数组后直接判断(带null)
-+ 同时dfs，只要不同就跳出
-
-
-
-灵神：
-
-+ 递归思想，转为子问题：
-  + 根节点相同
-  + 递归判断左子树相同
-  + 递归判断右子树相同
-
-+ 递归边界：有一个为空时返回false，两个都为空时返回true
-
-101.对称二叉树
-
-> 判断二叉树是否轴对称
-
-思考
-
-+ 相当于判断根节点的左右子树是否对称
-
-灵神
-
-+ 对称的判定：对于每个节点，左子树==右子树
-
-
-
-110.平衡二叉树
-
-> 判断每个结点左右子树高度差<=1
-
-思考：
-
-+ 递归判断
-+ 先计算当前结点高度，再比较左右子树的高度差
-
-
-
-#### 199.二叉树的右视图
-
-思考
-
-+ 层序遍历，保存每层的最后一个结点即可
-
-灵神：
-
-+ dfs，传入结点当前深度
-+ 优先递归右子树，每层碰到的第一个结点就是本层最右边的结点
-
-
-
-#### 98.验证二叉搜索树
-
-> 判断BST
-
-思考：
-
-+ 前序遍历，得到严格递增序列就是BST
-+ dfs, 返回子树的最大值，每个结点判断左子树最大值比当前小，右子树最大值比当前大
-
-灵神：
-
-1. 第一种：前序遍历，传入当前结点取值范围，满足取值范围即可
-2. 第二种：前序遍历判断严格递增序列
-   + 不需要遍历完后保存数组
-   + 只需要一个pre变量，保存上一次访问的结点
-3. 第三种：dfs，但**必须同时返回子树的最大和最小值**
-
-
-
-#### 236.二叉树的最近公共祖先
-
-思考：
-
-+ 先dfs得到每个结点的父亲和每个结点的层数
-+ 接着看成链表题，双指针，层数更深的结点先移动，直到层数相同时，一起移动，直到找到相同的father
-
-灵神：
-
-+ dfs过程中找p和q（传入p和q），返回找到的结点（p或q或None），左右子树依次递归
-+ 分类讨论dfs的当前节点：
-  1. p和q分别在左右两个子树中，那当前结点就是最近公共祖先
-  2. 左右子树只有一边找到（即p和q在同一边），那么先遍历到谁，谁就是答案
-
-
-
-#### 235.二叉搜索树的最近公共祖先
-
-思考：
-
-+ BST左小右大的性质怎么用？
-
-灵神：
-
-+ 已知p和q的值，只需要将p和q与dfs当前结点值比大小，
-  就能知道p和q在左子树还是右子树中，不需要递归查找pq
-  + p和q在左右两边，那当前结点就是答案
-  + p和q在同一边，只需要递归那一边，继续判断大小即可，先遍历到的就是答案（即当前节点为p或q时返回）
-
-
-
-#### 103.二叉树的锯齿形层序遍历
-
-思考：每层先左->右，再右->左
-
-灵神：
-
-+ 只需要设置一个bool变量，层序遍历时每层反转一下
-+ bool变量反转时，当前层的结点数组也要翻转后加入答案（python可以直接用切片）
-
-
-
-#### 78.子集
-
-> 求出一个集合的所有子集
-
-思考：枚举子集长度(0~n),每次用dfs求出当前长度的所有可能，只往右走不往左走就能保证不重复——$O(n * 2^n)$
-
-灵神：
-
-1. 从输入角度思考：对于每个元素，根据选还是不选构建二叉树，叶子就是所有的子集——$O(n*2^n)$
-
-<img src="./../../img/typora-user-images/image-20250528162302905.png" alt="image-20250528162302905" style="zoom:25%;" />
-
-2. 从答案角度思考：枚举第一个选谁，第二个选谁..., 并且只往右不往左保证不重复，此时每个结点都是答案——$O(n*2^n)$
-
-<img src="./../../img/typora-user-images/image-20250528163736805.png" alt="image-20250528163736805" style="zoom:25%;" />
-
-
-
-#### 131.分割回文串
-
-思考：根据每个分割位置是否要切来构建二叉树，得到所有的分割可能，再判断每种可能是不是满足要求
-
-灵神：
-
-+ 对每个分割位置枚举切还是不切，相当于从答案角度思考的子串问题，为确保不重复必须往右枚举
-
-
-
-#### 77.组合
-
-> 给定了子集长度求所有子集
-
-思考：直接dfs，比求所有子集简单
-
-
-
-
-
 ## HOT100刷题记录
 
 ### 哈希
@@ -3155,7 +2796,7 @@ public:
 
 ### 二叉树
 
-#### 94.二叉树的中序遍历
+#### [94. 二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/)
 
 > 康复训练
 
@@ -3179,7 +2820,7 @@ public:
 
 
 
-#### 104.二叉树的最大深度
+#### [104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
 
 > 1. 最大高度(自底向上计算)
 
@@ -3216,7 +2857,7 @@ public:
 
 
 
-#### 226.翻转二叉树
+#### [226. 翻转二叉树](https://leetcode.cn/problems/invert-binary-tree/)
 
 > 什么弱智题？自顶向下和自底向上没区别，随便什么时候交换
 
@@ -3237,7 +2878,7 @@ public:
 
 
 
-#### 101.对称二叉树
+#### [101. 对称二叉树](https://leetcode.cn/problems/symmetric-tree/)
 
 > 1. 翻转右子树，再判断左右子树是否相同
 
@@ -3284,7 +2925,7 @@ public:
 
 
 
-#### 543.二叉树的直径
+#### [543. 二叉树的直径](https://leetcode.cn/problems/diameter-of-binary-tree/)
 
 > 求左右子树深度之和最长的结点
 
@@ -3310,9 +2951,11 @@ public:
 
 
 
-#### 102. 二叉树的层序遍历
+#### [102. 二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/)
 
 > queue康复训练
+>
+> 难点：如何同时处理一层的所有元素？答：`q.size()`
 
 ```c++
 class Solution {
@@ -3323,19 +2966,218 @@ public:
         
         queue<TreeNode*> q;
         q.push(root);
-        while(q.size()) {       // 队列非空时执行
-            vector<int> tmp;    // 存放本层的所有结点
+        while(!q.empty()) {       // 队列非空时执行
+            vector<int> cur;    // 存放本层的所有结点
             int n = q.size();   // 本层结点个数
             while(n--) {        // 一次性弹出本层所有节点
-                TreeNode* cur = q.front();
+                TreeNode* front = q.front();
                 q.pop();
-                tmp.push_back(cur->val);
-                if(cur->left) q.push(cur->left);
-                if(cur->right) q.push(cur->right);
+                cur.push_back(front->val);
+                if(front->left) q.push(front->left);
+                if(front->right) q.push(front->right);
             }
-            ans.push_back(tmp);
+            ans.push_back(cur);
         }
         return ans;
+    }
+};
+```
+
+
+
+#### [108. 将有序数组转换为二叉搜索树](https://leetcode.cn/problems/convert-sorted-array-to-binary-search-tree/)
+
+> 二分建树
+
+```c++
+class Solution {
+public:
+    TreeNode* create(vector<int>& nums, int L, int R) {
+        if(L > R) return nullptr;
+        int mid = L + (R-L) / 2;    // 当前子树根
+        TreeNode* root = new TreeNode;
+        root->val = nums[mid];
+        root->left = create(nums, L, mid-1);
+        root->right = create(nums, mid+1, R);
+        return root;
+    }
+    TreeNode* sortedArrayToBST(vector<int>& nums) {
+        return create(nums, 0, nums.size()-1);
+    }
+};
+```
+
+
+
+#### [98. 判断BST](https://leetcode.cn/problems/validate-binary-search-tree/)
+
+> 方法一：dfs传入子树的最大最小值，即当前树根必须处于的区间，自顶向下更新区间
+
+```c++
+class Solution {
+public:
+    #define ll long long
+    bool dfs(TreeNode* root, ll Min, ll Max) {    // 传入有效区间
+        if(root == nullptr) {   // 空结点也算BST
+            return true;
+        }
+        return root->val > Min && root->val < Max   // 当前结点在区间内且左右子树都是BST
+        && dfs(root->left, Min, root->val) && dfs(root->right, root->val, Max);
+    }
+    bool isValidBST(TreeNode* root) {
+        return dfs(root, LLONG_MIN, LLONG_MAX);    // 根结点始终处于有效区间
+    }
+};
+```
+
+> 方法二：dfs返回子树的最大值和最小值，自底向上检查
+
+```c++
+class Solution {
+public:
+    pair<long long, long long> dfs(TreeNode* root) {
+        if(root == nullptr) {
+            return {LLONG_MAX, LLONG_MIN};  // 最小值置为最大，最大值置为最小，保证上面的节点满足BST
+        }
+        if(root->left == nullptr && root->right == nullptr) {   // 叶子
+            return {root->val, root->val};
+        }
+        
+        // 初始化最大最小值
+        long long cur_min = root->val, cur_max = root->val;
+
+        // 拿到左右子树的最大最小值
+        auto [Lmin, Lmax] = dfs(root->left);
+        auto [Rmin, Rmax] = dfs(root->right);
+
+        if(root->val <= Lmax || root->val >= Rmin) {    // 不是BST
+            return {LLONG_MIN, LLONG_MAX};      // 返回无效状态, 使得上面的结点都无效
+        }
+        
+        // 更新最大最小值
+        cur_min = min(Lmin, (long long)root->val);  // 如果左子树为空,Lmin为LLONG_MAX, 从而cur_min=当前结点
+        cur_max = max(Rmax, (long long)root->val);
+        
+        return {cur_min, cur_max};
+    }
+    
+    bool isValidBST(TreeNode* root) {
+        auto [root_min, root_max] = dfs(root);
+        return root_max != LLONG_MAX;  // 检查是否有效
+    }
+};
+```
+
+
+
+#### [230. 二叉搜索树中第 K 小的元素](https://leetcode.cn/problems/kth-smallest-element-in-a-bst/)
+
+> 中序遍历，外部维护step，step==k时得到答案
+
+```C++
+class Solution {
+public:
+    int ans = 0;
+    int step = 0;
+    void inOrder(TreeNode* root, int k) {
+        if(root == nullptr) return;
+        inOrder(root->left, k);
+        step++;
+        if(step == k) ans = root->val;
+        inOrder(root->right, k);
+    }
+    int kthSmallest(TreeNode* root, int k) {
+        inOrder(root, k);
+        return ans;
+    }
+};
+```
+
+
+
+#### [199. 二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/)
+
+> 层次遍历，每次遍历一整层，记录每层最后一个结点
+
+```c++
+class Solution {
+public:
+    vector<int> rightSideView(TreeNode* root) {
+        vector<int> ans;
+        queue<TreeNode*> q;
+        if(root != nullptr) q.push(root);
+        while(!q.empty()) {
+            int size = q.size();	// 当前层的元素个数
+            for(int i = 0; i < size; i++) {
+                TreeNode* front = q.front();
+                q.pop();
+                if(i == size - 1) ans.push_back(front->val);
+                if(front->left != nullptr) q.push(front->left);
+                if(front->right != nullptr) q.push(front->right);
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### [114. 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/)
+
+> root是按值传递，不能创建新树再赋值！！！修改root不能同时修改函数外部的根指针（例如叫ROOT)
+
+```c++
+class Solution {
+public:
+    vector<TreeNode*> pre;
+    void preOrder(TreeNode* root) {
+        if(root == nullptr) return;
+        pre.push_back(root);
+        preOrder(root->left);
+        preOrder(root->right);
+    }
+    void flatten(TreeNode* root) {  // root是按值传递, 直接修改root没效果
+        if(root == nullptr) return;
+        preOrder(root);
+        // 原地修改
+        for(int i = 1; i < pre.size(); i++) {
+            TreeNode* last = pre[i-1];      // 第一轮last==root
+            TreeNode* cur = pre[i];
+            last->left = nullptr;        // 这两行都是原地修改
+            last->right = cur;
+        }
+    }
+};
+```
+
+
+
+#### [105. 前序+中序建树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
+
+> 模板题，要背
+
+```c++
+class Solution {
+public:
+    TreeNode* create(vector<int>& preorder, vector<int>& inorder, int preL, int preR, int inL, int inR) {
+        if(preL > preR) return nullptr;
+        int x = preorder[preL];    // 当前根结点
+        int numLeft;        // 左子树元素个数
+        for(int i = inL; i <= inR; i++) {
+            if(inorder[i] == x) {
+                numLeft = i - inL;
+                break;
+            }
+        }
+        TreeNode* root = new TreeNode;
+        root->val = x;
+        root->left = create(preorder, inorder, preL + 1, preL + numLeft, inL, inL + numLeft - 1);
+        root->right = create(preorder, inorder, preL + numLeft + 1, preR, inL + numLeft+1, inR);
+        return root;
+    }
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        return create(preorder, inorder, 0, preorder.size()-1, 0, inorder.size()-1);
     }
 };
 ```
@@ -3435,13 +3277,472 @@ public:
 
 ### dp
 
+#### [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+
+```c++
+class Solution {
+public:
+    int climbStairs(int n) {
+        vector<int> dp(n+1, 1);
+        dp[1] = 1;
+        for(int i = 2; i <= n; i++) dp[i] = dp[i-1] + dp[i-2];
+        return dp[n];
+    }
+};
+```
+
+
+
+#### [118. 杨辉三角](https://leetcode.cn/problems/pascals-triangle/)
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> generate(int numRows) {
+        vector<vector<int>> ans;
+        vector<int> pre(1, 1);
+        ans.push_back(pre);
+        if(numRows == 1) return ans;
+        pre.push_back(1);
+        ans.push_back(pre);
+        if(numRows == 2) return ans;
+        for(int i = 3; i <= numRows; i++) {
+            vector<int> cur(i, 1);
+            for(int j = 1; j < i-1; j++) {   // 从第二个元素开始
+                cur[j] = pre[j-1] + pre[j];
+            }
+            pre = cur;
+            ans.push_back(cur);
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### [198. 打家劫舍](https://leetcode.cn/problems/house-robber/)
+
+
+
+```c++
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        int n = nums.size();
+        if(n == 1) return nums[0];
+        if(n == 2) return max(nums[0], nums[1]);
+        // 每次跳2个或3个
+        vector<int> dp(n, 0);     
+        // 1. dp[i]表示偷完第i个的最高金额（一定偷第i个）
+        // dp[i] = nums[i] + max(dp[i-2], dp[i-3])
+        // dp[0] = nums[0], dp[1] = nums[1];
+        // dp[2] = nums[2] + nums[0];
+        // for(int i = 3; i < n; i++) {
+        //     dp[i] = nums[i] + max(dp[i-2], dp[i-3]);
+        // }
+
+        // 2. dp[i]表示前i个能偷到的最高金额（第i个有偷和不偷两种情况）
+        // 偷i: dp[i] = dp[i-2] + nunms[i]
+        // 不偷i: dp[i] = dp[i-1]
+        // dp[i] = max(dp[i-1], dp[i-2] + nums[i]);
+        dp[0] = nums[0]; dp[1] = max(nums[0], nums[1]);
+        for(int i = 2; i < n; i++) {
+            dp[i] = max(dp[i-1], dp[i-2] + nums[i]);
+        }
+        return dp[n-1];
+    }
+};
+```
+
+
+
+#### [279. 完全平方数](https://leetcode.cn/problems/perfect-squares/)
+
+> 完全背包
+
+```c++
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> nums;
+        for(int i = 1; i <= 100; i++) {
+            nums.push_back(i*i);
+        }
+        // 在nums数组中找和为n的最少个数
+        const int inf = 0x3fffffff;
+        vector<vector<int>> dp(101, vector<int>(n+1, inf));   // dp[i][j]=前i个数和为n的最少个数
+        // dp[i][0] = 0, dp[0][i] = inf, dp[i][1] = 1
+        for(int i = 0; i <= 100; i++) dp[i][0] = 0;
+        for(int i = 1; i <= 100; i++) {
+            for(int j = 1; j <= n; j++) {
+                if(j >= nums[i-1]) {  // 可以选nums
+                    dp[i][j] = min(dp[i][j-nums[i-1]] + 1, dp[i-1][j]);
+                }else {     // 不能选
+                    dp[i][j] = dp[i-1][j];
+                }
+                
+            }
+        } 
+        return dp[100][n];
+    }
+};
+```
+
+
+
+
+
+#### [322. 零钱兑换](https://leetcode.cn/problems/coin-change/)
+
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        int n = coins.size();
+        const int inf = 0x3fffffff;
+        vector<vector<int>> dp(n+1, vector<int>(amount+1, inf)); // dp[i][j]: 前i个硬币凑j的最少个数
+        // dp[i][0] = 0
+        for(int i = 0; i <= n; i++) dp[i][0] = 0;
+        for(int i = 1; i <= n; i++) {
+            for(int j = 1; j <= amount; j++) {
+                if(j >= coins[i-1]) {   // 可以选i
+                    dp[i][j] = min(dp[i-1][j], dp[i][j-coins[i-1]] + 1);
+                }else {              // 不能选i
+                    dp[i][j] = dp[i-1][j];
+                }
+            }
+        }
+        return dp[n][amount] == inf ? -1 : dp[n][amount];
+    }
+};
+```
+
+
+
+
+
+#### [139. 单词拆分](https://leetcode.cn/problems/word-break/)
+
+```c++
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        int L = s.length();
+        vector<bool> canSplit(L+1, false);  // canSplit[i]=s[0-i-1]能够被组合
+        canSplit[0] = true;
+        for(int i = 1; i <= L; i++) {
+            for(auto word : wordDict) {     // 枚举每个单词
+                if(i >= word.length()) {
+                    canSplit[i] = canSplit[i-word.length()] && s.substr(i-word.length(), word.length()) == word;
+                    if(canSplit[i]) break;  // 可以组合直接跳到下一个字符，防止被覆盖
+                }
+            }
+        }
+        return canSplit[L];
+    }
+};
+```
+
+
+
+#### [300. 最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+
+> 子序列：不连续
+
+```c++
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> dp(n, 1);   // dp[i]:i结尾的最大长度
+        int ans = 1;
+        for(int i = 1; i < n; i++) {
+            for(int j = 0; j < i; j++) {    // 跟前面所有元素对比
+                if(nums[i] > nums[j]) {
+                    dp[i] = max(dp[i], dp[j] + 1);
+                    ans = max(ans, dp[i]);
+                }
+
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### [152. 乘积最大子数组](https://leetcode.cn/problems/maximum-product-subarray/)
+
+> 连续子数组
+> 需要同时维护最大最小值，因为有负数
+
+```C++
+class Solution {
+public:
+    int maxProduct(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> maxdp(n, 0); // maxdp[i]: 以nums[i]结尾的最大乘积
+        vector<int> mindp(n, 0); // 最小乘积
+        mindp[0] = nums[0], maxdp[0] = nums[0];
+        for(int i = 1; i < n; i++) {
+            if(nums[i] < 0) {
+                maxdp[i] = max(nums[i], mindp[i-1] * nums[i]);
+                mindp[i] = min(nums[i], maxdp[i-1] * nums[i]);
+            }else {
+                maxdp[i] = max(nums[i], maxdp[i-1] * nums[i]);
+                mindp[i] = min(nums[i], mindp[i-1] * nums[i]);
+            }
+        }
+        int ans = nums[0];
+        for(int i = 0; i < n; i++) ans = max(ans, maxdp[i]);
+        return ans;
+    }
+};
+```
+
+
+
+#### [416. 分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/)
+
+> 转换成0-1背包，相当于n个数找和为sum/2
+
+```c++
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int n = nums.size();
+        int sum = 0;
+        for(int i = 0; i < n; i++) sum += nums[i];
+        if(sum % 2 == 1) return false;
+        // n个数找和为k = sum/2的
+        int k = sum / 2;
+        vector<vector<bool>> dp(n+1, vector<bool>(k+1, false)); // dp[i][j]=前i个数是否存在和为j的组合
+        // dp[i][0] = true,dp[0][j] = 0
+        for(int i = 0; i <= n; i++) dp[i][0] = true;    // 全都不选就是和为0
+        for(int i = 1; i <= n; i++) {
+            for(int j = 1; j <= k; j++) {
+                if(j >= nums[i-1]) { // 有容量才能选
+                    dp[i][j] = dp[i-1][j-nums[i-1]] || dp[i-1][j];  // 选或不选只要有一个满足
+                }else { // 没容量，不能选
+                    dp[i][j] = dp[i-1][j];
+                }
+            }
+        }
+
+        return dp[n][k];
+    }
+};
+```
+
+
+
+#### [32. 最长有效括号](https://leetcode.cn/problems/longest-valid-parentheses/)
+
+> `dp[i]=以i结尾的最长有效括号长度`
+>
+> 以左括号结尾不可能有效（dp[i]=0）
+>
+> 以右括号结尾分两个情况：
+>
+> 1. 前一个是"(": 直接转移到dp[i-2]. 
+> 2. 前一个是")": 找到前一个未匹配的左括号，接着转移到dp[i-dp[i-1]-2]
+
+```c++
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int n = s.length();
+        if(n < 2) return false;
+        vector<int> dp(n, 0);   // dp[i]=以s[i]结尾的最长有效括号长度
+        for(int i = 1; i < n; i++) {
+            if(s[i] == ')') {   // 必须以右括号结尾
+                if(s[i-1] == '(') {
+                    if(i > 1) dp[i] = dp[i-2] + 2;
+                    else dp[i] = 2;
+                } else if(dp[i-1] > 0){    // 两个右括号
+                    int pos = i - dp[i-1] - 1;  // 前一个没匹配的位置
+                    if(pos >= 0 && s[pos] == '(') {     // 必须是左括号才能匹配
+                        dp[i] = dp[i-1] + 2;
+                        if(pos > 0) dp[i] += dp[pos-1];
+                    }
+                }
+            }
+        }
+        int ans = 0;
+        for(int i = 0; i < n; i++) {
+            ans = max(ans, dp[i]);
+        }
+        return ans;
+    }
+};
+```
+
+
+
 
 
 ### 多维dp
 
+#### [62. 不同路径](https://leetcode.cn/problems/unique-paths/)
 
+> 太弱智了
+
+```c++
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        vector<vector<int>> dp(m, vector<int>(n, 1));
+        for(int i = 1; i < m; i++) {
+            for(int j = 1; j < n; j++) {
+                dp[i][j] = dp[i-1][j] + dp[i][j-1];
+            }
+        }
+        return dp[m-1][n-1];
+    }
+};
+```
+
+
+
+#### [64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
+
+```c++
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        int m = grid.size(), n = grid[0].size();
+        vector<vector<int>> dp(m, vector<int>(n,0));
+        dp[0][0] = grid[0][0];
+        for(int i = 1; i < m; i++) dp[i][0] = dp[i-1][0] + grid[i][0];
+        for(int j = 1; j < n; j++) dp[0][j] = dp[0][j-1] + grid[0][j];
+        for(int i = 1; i < m; i++) {
+            for(int j = 1; j < n; j++) {
+                dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j];
+            }
+        }
+        return dp[m-1][n-1];
+    }
+};
+```
+
+
+
+#### [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
+
+> 子串：连续
+>
+> 子序列：不连续
+>
+> 与最长回文子序列的思路完全不同！！！
+
+```c++
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        int n = s.length();
+        vector<vector<bool>> dp(n, vector<bool>(n, false));     // dp[i][j]=闭区间s[i, j]是否是回文串
+        string ans = "";
+        for(int len = 1; len <= n; len++) {     // 枚举子串长度
+            for(int i = 0; i <= n-len; i++) {    // 轮流判断，填dp数组
+                int j = i + len - 1;
+                if(len == 1) dp[i][j] = true;
+                else if(len == 2) dp[i][j] = (s[i] == s[j]);
+
+                else if(s[i] == s[j] && dp[i+1][j-1]) {    // 两端相同且中间回文时，才满足
+                    dp[i][j] = true;
+                }else dp[i][j] = false;
+                
+                // 记录最长回文串
+                if(dp[i][j] && len > ans.length()) ans = s.substr(i, len);
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### [1143. 最长公共子序列](https://leetcode.cn/problems/longest-common-subsequence/)
+
+```c++
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        int m = text1.length(), n = text2.length();
+        vector<vector<int>> dp(m+1, vector<int>(n+1, 0));
+        // dp[i][j]: s1前i个和s2前j个的最长公共子序列
+        // dp[i][0] = 0, dp[0][j] = 0;
+        for(int i = 1; i <= m; i++) {
+            for(int j = 1; j <= n; j++) {
+                if(text1[i-1] == text2[j-1]) {  // 当前字符相等
+                    dp[i][j] = dp[i-1][j-1] + 1;    // 转移到前一个字符 
+                }else dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+
+
+#### [72. 编辑距离](https://leetcode.cn/problems/edit-distance/)
+
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        // 和LCS（最长公共子序列）的区别：
+        // LCS: 保留相同的字符，忽略不同的
+        // 编辑距离: 修复不同的字符，跳过相同的
+        /* 从头开始思考：（下面假设下标从1开始）
+        当 word1[i] == word2[j] 时: 不需要操作，直接跳过
+            dp[i, j] = dp[i-1, j-1] + 0
+
+        当 word1[i] != word2[j] 时，我们有三种选择：
+            1. 删除 word1[i] -> dp[i-1, j] + 1
+                相当于已经把word1前i-1个字符变成了word2前j个字符基础上再删除一个字符
+            2. 插入 word2[j] -> dp[i, j-1] + 1
+                相当于已经把word1前i个字符变成了word2前j-1个字符基础上再插入一个字符
+            3. 直接替换: dp[i-1, j-1] + 1
+                相当于已经把word1前i-1个字符变成了word2前j-1个字符基础上再替换一个字符
+            此时dp[i, j] = min(上面三种)
+        */
+        int m = word1.length(), n = word2.length();
+        vector<vector<int>> dp(m+1, vector<int>(n+1, 0));
+        for(int i = 0; i <= m; i++ ){
+            dp[i][0] = i;
+        }
+        for(int j = 0; j <= n; j++) {
+            dp[0][j] = j;
+        }
+        for(int i = 1; i <= m; i++) {
+            for(int j = 1; j <= n; j++) {
+                if(word1[i-1] == word2[j-1]) {
+                    dp[i][j] = dp[i-1][j-1];
+                }else {
+                    dp[i][j] = min({dp[i-1][j-1], dp[i][j-1], dp[i-1][j]}) + 1;
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
 
 
 
 ### 技巧
 
+
+
+
+
+
+
+## LC-training
+
+ 
