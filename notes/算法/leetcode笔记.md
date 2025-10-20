@@ -3272,6 +3272,123 @@ public:
 
 ### 贪心
 
+#### [121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
+
+> 记录目前股票最低值
+
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int n = prices.size();
+        int ans = 0;
+        int preMin = prices[0];     // 记录之前的股票最低值
+        for(int i = 1; i < n; i++) {
+            preMin = min(preMin, prices[i]);
+            ans = max(ans, prices[i] - preMin);
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### [55. 跳跃游戏](https://leetcode.cn/problems/jump-game/)
+
+> 记录当前能到达的最远位置, 大于n-1即成功
+
+```C++
+class Solution {
+public:
+    bool canJump(vector<int>& nums) {
+        int n = nums.size();
+        int maxReach = 0;
+        for(int i = 0; i < n; i++) {
+            if(i <= maxReach) {     // 当前位置可以到达
+                maxReach = max(maxReach, i + nums[i]);  // 更新最远位置
+            }
+            if(maxReach >= n - 1) {
+                return true;
+            }
+        }
+        return false;       // 遍历完发现maxReach没有超过n，说明到达不了
+    }
+};
+```
+
+
+
+#### [45. 跳跃游戏 II](https://leetcode.cn/problems/jump-game-ii/)
+
+> 构建前驱树，从最后一个位置不断跳到最左边的前驱，直到位置0 —— O(n^2)
+
+```c++
+class Solution {
+public:
+    int jump(vector<int>& nums) {
+        int n = nums.size();
+        map<int, vector<int> >pre;     // 存放每个位置的所有前驱
+        for(int i = 0; i < n; i++) {
+            for(int j = 1; j <= nums[i]; j++) {     // 对每个后序
+                if(i+j < n) pre[i+j].push_back(i);    // 从i可以到达j
+            }
+        }
+        int ans = 0;
+        int cur = n-1;
+        while(cur != 0) {
+            cur = pre[cur][0];  // 第一个就是最靠左的位置
+            ans++;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+
+
+
+
+> 正向遍历，在当前跳跃能覆盖的范围内，提前找出下一跳能到达的最远位置，当遍历到当前范围边界时执行跳跃。 ——O(n)
+>
+> 初始化范围[0,0]
+>
+> 只需要记录当前范围的右边界，到达右边界时更新下个右边界。
+>
+> ==**这个思路不能记录跳跃路径！！！**==
+>
+> ![image-20251016153733055](./../../img/typora-user-images/image-20251016153733055.png)
+
+```C++
+class Solution {
+public:
+    int jump(vector<int>& nums) {
+        int n = nums.size();
+        int ans = 0;
+        int cur_end = 0;    // 当前区间右端点
+        int next_end = 0;       // 下一个区间右端点
+        for(int i = 0; i < n-1; i++) {
+            next_end = max(next_end, i + nums[i]);
+
+            if(i == cur_end) {  // 到达当前右端点
+                cur_end = next_end; // 更新为下个区间
+                ans++;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### [763. 划分字母区间](https://leetcode.cn/problems/partition-labels/)
+
+
+
+
 
 
 
