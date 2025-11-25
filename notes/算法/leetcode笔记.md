@@ -3184,6 +3184,41 @@ public:
 
 
 
+#### [437. 路径总和 III](https://leetcode.cn/problems/path-sum-iii/)
+
+
+
+
+
+#### [236. LCA](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)
+
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        // 思路：在左右子树递归找给的两个节点.递归过程中:
+        // 1. 如果左右子树分别找到了两个结点，则当前root就是答案，直接返回（自底向上的特性保证了当前root就是LCA）
+        // 2. 如果只在一边找到，另一边没找到，说明找到的那边就是LCA
+        
+        if(root == nullptr) return nullptr;   // 没找到
+        if(root == p || root == q) return root;     // 递归到了目标节点就返回这个结点
+        // 分别在左右子树找
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+        // 查看结果
+        if(left != nullptr && right != nullptr) {   // 两个结点分别在两边
+            return root;        // 当前root就是答案
+        }else {
+            return left != nullptr ? left : right;  // 否则哪边找到了就返回哪边
+        }
+    }
+};
+```
+
+
+
+
+
 
 
 ### 图
@@ -3240,7 +3275,92 @@ public:
 
 ### 回溯
 
+#### dfs pop总结
 
+**需要 pop 的情况：**
+
+- 在同一个数据结构上连续做多个选择
+- 这些选择会相互影响
+- 你需要撤销之前的选择来尝试新的路径
+
+**不需要 pop 的情况：**
+
+- 每次递归使用独立的数据结构副本
+- 函数结束后不再使用该数据结构
+- 没有后续操作依赖于撤销当前修改
+
+#### [46. 全排列](https://leetcode.cn/problems/permutations/)
+
+> 每层dfs个数不同，需要visited数组记录是否访问过
+
+<img src="./../../img/typora-user-images/image-20251028165006481.png" alt="image-20251028165006481" style="zoom:25%;" />
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> ans;
+    vector<bool> visited;
+    void dfs(vector<int>& nums, vector<int> cur, int layer, int n) {
+        if(layer == n) {
+            ans.push_back(cur);
+            return;
+        }
+        for(int i = 0; i < n; i++) {    // 对于所有元素
+            if(visited[i]) continue;    // 跳过已访问元素
+            cur.push_back(nums[i]);
+            visited[i] = true;
+            dfs(nums, cur, layer+1, n);
+            visited[i] = false;
+            cur.pop_back();
+
+        }
+        
+
+    }
+    vector<vector<int>> permute(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> cur;
+        visited.resize(n);
+        dfs(nums, cur, 0, n);
+        return ans;
+    }
+};
+```
+
+
+
+
+
+#### [78. 子集](https://leetcode.cn/problems/subsets/)
+
+> 构造完全二叉树，思路简单直观
+
+<img src="./../../img/typora-user-images/image-20251028164115345.png" alt="image-20251028164115345" style="zoom: 25%;" />
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> ans;
+    void dfs(vector<int>& nums, vector<int>& cur, int step) {
+        if(step == nums.size()) {
+            ans.push_back(cur);
+            return;
+        }
+        // 不选
+        dfs(nums, cur, step+1);
+        // 选
+        cur.push_back(nums[step]);    // 加入当前层的元素
+        dfs(nums, cur, step+1);
+        cur.pop_back();
+
+    }
+    vector<vector<int>> subsets(vector<int>& nums) {
+        vector<int> cur;
+        dfs(nums, cur, 0);
+        return ans;
+    }
+};
+```
 
 
 
@@ -3812,36 +3932,22 @@ public:
 class Solution {
 public:
     int minDistance(string word1, string word2) {
-        // 和LCS（最长公共子序列）的区别：
-        // LCS: 保留相同的字符，忽略不同的
-        // 编辑距离: 修复不同的字符，跳过相同的
-        /* 从头开始思考：（下面假设下标从1开始）
-        当 word1[i] == word2[j] 时: 不需要操作，直接跳过
-            dp[i, j] = dp[i-1, j-1] + 0
-
-        当 word1[i] != word2[j] 时，我们有三种选择：
-            1. 删除 word1[i] -> dp[i-1, j] + 1
-                相当于已经把word1前i-1个字符变成了word2前j个字符基础上再删除一个字符
-            2. 插入 word2[j] -> dp[i, j-1] + 1
-                相当于已经把word1前i个字符变成了word2前j-1个字符基础上再插入一个字符
-            3. 直接替换: dp[i-1, j-1] + 1
-                相当于已经把word1前i-1个字符变成了word2前j-1个字符基础上再替换一个字符
-            此时dp[i, j] = min(上面三种)
-        */
-        int m = word1.length(), n = word2.length();
+        int m = word1.size(), n = word2.size();
         vector<vector<int>> dp(m+1, vector<int>(n+1, 0));
-        for(int i = 0; i <= m; i++ ){
-            dp[i][0] = i;
-        }
-        for(int j = 0; j <= n; j++) {
-            dp[0][j] = j;
-        }
+        // dp[i][j]=word1前i个转为word2前j个最小操作数
+        // dp[i][0]=i, dp[0][j]=j;
+        for(int i = 0; i <= m; i++) dp[i][0] = i;
+        for(int j = 0; j <= n; j++) dp[0][j] = j;
         for(int i = 1; i <= m; i++) {
             for(int j = 1; j <= n; j++) {
                 if(word1[i-1] == word2[j-1]) {
                     dp[i][j] = dp[i-1][j-1];
                 }else {
-                    dp[i][j] = min({dp[i-1][j-1], dp[i][j-1], dp[i-1][j]}) + 1;
+                    // 不相同，三种操作：
+                    // 1. 替换-> dp[i-1][j-1] + 1
+                    // 2. word1[i-1]变为word2[j]基础上，删除word[i]-> dp[i-1][j] + 1
+                    // 3. word1[i]变为word2[j-1]基础上，插入word[j]-> dp[i][j-1] + 1
+                    dp[i][j] = min({dp[i-1][j-1]+1, dp[i-1][j]+1, dp[i][j-1]+1});
                 }
             }
         }
