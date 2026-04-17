@@ -1184,54 +1184,96 @@ CreateTaskPass()           # 7. 创建 Task（按核分配工作）
 
 > 这一节是给你（新实习生）准备的**手把手阅读路径**。前面 3.0-3.5 讲的是"这个项目在做什么、为什么这么做"；这一节讲的是"你打开 VSCode 之后该先点开哪个文件、再点哪个、每个文件看完应该能答出什么问题"。
 
-### 3.6.1 项目整体结构树状图
+### 3.6.1 项目整体结构（分三张图看）
+
+之前只画一张大图什么都塞进去，页面一缩小节点就糊了。这里拆成三张**各管一事**的小图：
+
+- **图 A**：项目根目录长什么样（一眼看懂有哪几个大文件夹）
+- **图 B**：主代码包 `assembler/` 内部分工（核心）
+- **图 C**：五层 IR 如何在 `dialect/` 和 `transforms/` 里成对出现（读源码的时候最常看的图）
+
+---
+
+#### 图 A · 项目根目录（一眼看懂 7 个大文件夹）
+
+```mermaid
+graph LR
+    Root["assembler/<br/>项目根"]
+    Root --> A1["tools/<br/>CLI 入口"]
+    Root --> A2["cfg/<br/>硬件配置"]
+    Root --> A3["docs/<br/>官方学习文档"]
+    Root --> A4["assembler/<br/><b>主代码包 ⭐</b>"]
+    Root --> A5["tests/<br/>单元测试"]
+    Root --> A6["remote_executor/<br/>远程调试"]
+    Root --> A7["setup.py 等<br/>构建配置"]
+
+    style A4 fill:#ffe4b5
+    style A3 fill:#c9f2c9
+    style A6 fill:#ddd
+```
+
+`tools/` 是你**跑项目时**的入口；`assembler/` 是**看代码时**的主战场（图 B 展开）；`docs/` 里有官方 898 行学习指南，**先读它**；`remote_executor/` 跟编译流程无关，新人可跳过。
+
+---
+
+#### 图 B · 主代码包 `assembler/` 的 9 大模块（只展开一层）
+
+```mermaid
+graph LR
+    Pkg["assembler/<br/>(主代码包)"]
+    Pkg --> B1["api/build.py<br/><b>🎯 总调度器</b>"]
+    Pkg --> B2["parser/<br/>读 FSIR JSON"]
+    Pkg --> B3["dialect/<br/>IR 类定义<br/>(名词)"]
+    Pkg --> B4["transforms/<br/>下译 Pass<br/>(动词)"]
+    Pkg --> B5["target/zeus/core.py<br/><b>🎯 硬件后端</b>"]
+    Pkg --> B6["memory/<br/>DRAM + L2 分配"]
+    Pkg --> B7["printer/<br/>输出 .bin/.json"]
+    Pkg --> B8["support/<br/>Pass 基类 + ctx"]
+    Pkg --> B9["utils/<br/>config + 日志"]
+
+    style B1 fill:#ffe4b5
+    style B5 fill:#ffe4b5
+    style B3 fill:#e0f0ff
+    style B4 fill:#fff0e0
+```
+
+**两个橙色文件是整个项目的心脏**：`api/build.py`（编译流水线的总指挥，608 行）和 `target/zeus/core.py`（硬件后端的核心，4154 行）。读懂它们俩等于读懂项目 70%。
+
+**`dialect/`（蓝）和 `transforms/`（橙）成对出现**：前者是"有哪些类型的 IR 节点"（名词），后者是"怎么把上一层 IR 翻译成下一层"（动词）。下面图 C 展示它们怎么按 5 层 IR 对齐。
+
+---
+
+#### 图 C · 五层 IR 在 `dialect/` 和 `transforms/` 里的对应关系（**读源码时最重要的图**）
 
 ```mermaid
 graph TB
-    Root["assembler/ (项目根目录)"]
+    FSIR["<b>第 1 层 FSIR</b><br/>(JSON 输入)"]
+    NN["<b>第 2 层 NNLayer</b><br/>(结构化图)"]
+    ZL["<b>第 3 层 ZeusLayer</b><br/>(绑硬件单元)"]
+    ABS["<b>第 4 层 ABSNode</b><br/>(指令 DAG)"]
+    MI["<b>第 5 层 MachineInstr</b><br/>(16 字节二进制)"]
 
-    Root --> Entry["tools/<br/>CLI 入口 + 工具脚本"]
-    Root --> Cfg["cfg/<br/>硬件配置 (core_type=935)"]
-    Root --> Docs["docs/<br/>官方学习文档 (898行)"]
-    Root --> Pkg["assembler/<br/>主代码包"]
-    Root --> Tests["tests/<br/>单元测试"]
-    Root --> Remote["remote_executor/<br/>远程 NPU 调试 (不是编译主流程)"]
-    Root --> Setup["setup.py / requirements.txt / pytest.ini<br/>构建与依赖"]
+    FSIR -->|"transforms/<br/>fsir2nnlayer.py"| NN
+    NN -->|"transforms/<br/>nnlayer2zeuslayer.py<br/>(708 行, 核心)"| ZL
+    ZL -->|"transforms/<br/>zeusdata2dramtensor.py<br/>(864 行, 分配 DRAM)"| ABS
+    ABS -->|"target/zeus/core.py<br/>parse_ir + lowering<br/>(后端发射)"| MI
 
-    Pkg --> Api["api/build.py<br/>🎯 总调度器 Network 类"]
-    Pkg --> Parser["parser/<br/>读 FSIR JSON 进 Python 对象"]
-    Pkg --> Dialect["dialect/<br/>五层 IR 的类定义 (名词)"]
-    Pkg --> Transforms["transforms/<br/>五个 Pass 下译 (动词)"]
-    Pkg --> Target["target/<br/>硬件后端 (935 专属)"]
-    Pkg --> Memory["memory/<br/>DRAM / L2 内存分配"]
-    Pkg --> Printer["printer/<br/>IR → 二进制 .bin / .json"]
-    Pkg --> Support["support/<br/>Pass 基类、ContextManager、图工具"]
-    Pkg --> Utils["utils/<br/>config、日志、文件 IO"]
+    FSIR -.定义在.-> DF["dialect/input_ir/"]
+    NN -.定义在.-> DN["dialect/nn_layer/"]
+    ZL -.定义在.-> DZ["dialect/zeus_layer/"]
+    ABS -.定义在.-> DA["dialect/abs_inst/"]
+    MI -.定义在.-> DM["dialect/zeus_inst/"]
 
-    Dialect --> D1["input_ir/ — FSIR / STSIR (第 1 层)"]
-    Dialect --> D2["nn_layer/ — NNLayer / NNGraph (第 2 层)"]
-    Dialect --> D3["zeus_layer/ — ZeusLayer / ZeusGraph (第 3 层)"]
-    Dialect --> D4["abs_inst/ — ABSNode DAG (第 4 层)"]
-    Dialect --> D5["zeus_inst/ — MachineInstr + opcode 字典 (第 5 层)"]
-    Dialect --> Dm["multi_kernel/ / qiming_base/ — 多核与基础类型"]
-
-    Transforms --> T1["fsir2nnlayer.py<br/>第 1→2 层"]
-    Transforms --> T2["nnlayer2zeuslayer.py<br/>第 2→3 层 (核心 Pass, 708 行)"]
-    Transforms --> T3["zeuslayer_optimize.py<br/>第 3 层内部优化"]
-    Transforms --> T4["zeusdata2dramtensor.py<br/>分配 DRAM 地址 (864 行)"]
-    Transforms --> T5["input_ir_preproc.py<br/>FSIR 预处理 (BN 融合等)"]
-    Transforms --> T6["multi_kernel.py<br/>多核调度 (2058 行, 复杂, 暂缓)"]
-
-    Target --> TgZeus["zeus/core.py<br/>🎯 ZeusCore: 第 3→4→5 层 (4154 行, 项目核心)"]
-    Target --> TgTask["task.py<br/>NPU vs CPU 任务抽象"]
-
-    style Api fill:#ffe4b5
-    style TgZeus fill:#ffe4b5
-    style Docs fill:#c9f2c9
-    style Remote fill:#ddd
+    style FSIR fill:#e0f0ff
+    style NN fill:#e0f0ff
+    style ZL fill:#e0f0ff
+    style ABS fill:#e0f0ff
+    style MI fill:#e0f0ff
 ```
 
-标橙色的两个文件（`api/build.py` 和 `target/zeus/core.py`）是**整个项目的心脏**，读懂它们等于读懂项目 70%。
+**怎么用这张图**：想追某一层的代码时，**蓝色方块**告诉你"这层叫什么"（`dialect/xxx/` 里看类定义），**方块之间的箭头标签**告诉你"怎么下译到下一层"（对应 `transforms/` 或 `target/` 的哪个文件）。比如你要看"NNLayer 怎么变成 ZeusLayer"，就打开 `transforms/nnlayer2zeuslayer.py`。
+
+**一个视觉规律**：前 3 层下译都在 `transforms/`，第 4→5 层下译跑到 `target/zeus/core.py` 去了。**为什么**？因为前 3 层还是"描述模型算子"，跟哪颗芯片无关；第 4 层开始就是硬件指令了，必须按芯片型号走不同后端——这正是 3.6.4 里"前端后端分离"原则的体现。
 
 ---
 
